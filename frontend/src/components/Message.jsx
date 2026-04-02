@@ -131,10 +131,10 @@ export default function Message({ message }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -8 }}
-      transition={{ duration: 0.25, ease: 'easeOut' }}
+      initial={{ opacity: 0, scale: 0.95, y: 10 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95, y: -10 }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
       className={clsx(
         "flex w-full px-4 md:px-6 mx-auto max-w-3xl mb-6 space-x-4",
         isUser ? "justify-end flex-row-reverse space-x-reverse" : "justify-start"
@@ -152,33 +152,36 @@ export default function Message({ message }) {
         {isError && <AlertTriangle size={17} />}
       </div>
 
-      {/* Message bubble */}
+      {/* Message Content Area */}
       <div className={clsx(
-        "rounded-2xl max-w-[85%] text-sm md:text-base leading-relaxed",
-        isBot && "text-gemini-text bg-transparent py-1",
-        isUser && "text-gray-100 bg-gemini-userBubble shadow-sm px-4 py-3",
-        isError && "text-red-300 bg-red-950/40 border border-red-800/50 px-4 py-3"
+        "flex flex-col max-w-[85%]",
+        isUser && "items-end",
+        isBot && "items-start"
       )}>
-        {isBot ? (
-          <>
+        {isBot && message.predictedCategory && (
+          <span className="text-[10px] uppercase font-bold tracking-wider text-purple-400 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded-full mb-1">
+            {message.predictedCategory}
+          </span>
+        )}
+        
+        {/* Message bubble */}
+        <div className={clsx(
+          "rounded-2xl text-sm md:text-base leading-relaxed w-full",
+          isBot && "text-gemini-text bg-transparent py-1",
+          isUser && "text-gray-100 bg-gemini-userBubble shadow-sm px-4 py-3",
+          isError && "text-red-300 bg-red-950/40 border border-red-800/50 px-4 py-3"
+        )}>
+          {isBot ? (
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               components={markdownComponents}
             >
               {message.content || ' '}
             </ReactMarkdown>
-            {/* Blinking cursor while streaming */}
-            {message.streaming && (
-              <motion.span
-                animate={{ opacity: [1, 0] }}
-                transition={{ duration: 0.6, repeat: Infinity, ease: 'easeInOut' }}
-                className="inline-block w-0.5 h-4 bg-gemini-primary ml-0.5 align-middle rounded-sm"
-              />
-            )}
-          </>
-        ) : (
-          <p className="whitespace-pre-wrap">{message.content}</p>
-        )}
+          ) : (
+            <p className="whitespace-pre-wrap">{message.content}</p>
+          )}
+        </div>
       </div>
     </motion.div>
   );

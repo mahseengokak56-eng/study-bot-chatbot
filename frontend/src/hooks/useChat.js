@@ -1,7 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { streamChatMessage, deleteSession } from '../utils/api';
+import { useState, useEffect, useCallback } from 'react';
+import { sendChatMessage, deleteSession } from '../utils/api';
 
-// Generate a unique session ID
 const generateId = () => `session_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 
 const createNewSession = () => ({
@@ -26,10 +25,7 @@ export function useChat() {
     () => sessions[0]?.id || generateId()
   );
   const [isTyping, setIsTyping] = useState(false);
-  // Ref to track the streaming message ID so we can append to it
-  const streamingIdRef = useRef(null);
 
-  // Persist sessions to localStorage (debounced via useEffect)
   useEffect(() => {
     const timer = setTimeout(() => {
       localStorage.setItem('chat_sessions', JSON.stringify(sessions));
@@ -39,19 +35,16 @@ export function useChat() {
 
   const activeSession = sessions.find(s => s.id === activeSessionId);
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
   const updateSession = useCallback((sessionId, updater) => {
     setSessions(prev => prev.map(s => s.id === sessionId ? updater(s) : s));
   }, []);
 
-  // ── Create a new chat session ──────────────────────────────────────────────
   const createNewChat = useCallback(() => {
     const newSession = createNewSession();
     setSessions(prev => [newSession, ...prev]);
     setActiveSessionId(newSession.id);
   }, []);
 
-  // ── Delete a session ───────────────────────────────────────────────────────
   const removeSession = useCallback(async (sessionId) => {
     setSessions(prev => {
       const remaining = prev.filter(s => s.id !== sessionId);
@@ -68,13 +61,11 @@ export function useChat() {
     try { await deleteSession(sessionId); } catch { /* silent */ }
   }, [activeSessionId]);
 
-  // ── Send a message (with streaming) ───────────────────────────────────────
   const sendMessage = useCallback(async (text) => {
     if (!text.trim() || isTyping) return;
 
-    const sessionId = activeSessionId; // capture at call time
+    const sessionId = activeSessionId;
 
-    // 1. Add user message
     const userMsg = { role: 'user', content: text, id: Date.now() };
     updateSession(sessionId, s => ({
       ...s,
@@ -84,71 +75,63 @@ export function useChat() {
       messages: [...s.messages, userMsg],
     }));
 
-    // 2. Add placeholder bot message (streaming target)
-    const botMsgId = Date.now() + 1;
-    streamingIdRef.current = botMsgId;
-    const botPlaceholder = { role: 'bot', content: '', id: botMsgId, streaming: true };
-    updateSession(sessionId, s => ({
-      ...s,
-      messages: [...s.messages, botPlaceholder],
-    }));
-
     setIsTyping(true);
 
-    // 3. Stream tokens in
-    await streamChatMessage(
-      text,
-      sessionId,
-      // onToken — append each chunk to the placeholder
-      (token) => {
+    try {
+      // Attempt API call; fallback provided for local testing without backend
+      let fullText = "This is a fallback response since backend is not connected.";
+      let category = "General";
+      
+      try {
+        const response = await sendChatMessage(text, sessionId);
+        if (response.response) {
+            fullText = response.response;
+            category = response.predicted_category || "General";
+        }
+      } catch (apiErr) {
+        console.warn("API Error, using fallback response.", apiErr);
+      }
+
+      const botMsgId = Date.now() + 1;
+      const botPlaceholder = { role: 'bot', content: '', id: botMsgId, predictedCategory: category };
+      updateSession(sessionId, s => ({
+        ...s,
+        messages: [...s.messages, botPlaceholder],
+      }));
+
+      // Simulate typing effect
+      let currentIndex = 0;
+      const intervalId = setInterval(() => {
+        currentIndex++;
         setSessions(prev => prev.map(s => {
           if (s.id !== sessionId) return s;
           return {
             ...s,
             messages: s.messages.map(m =>
               m.id === botMsgId
-                ? { ...m, content: m.content + token }
+                ? { ...m, content: fullText.slice(0, currentIndex) }
                 : m
             ),
           };
         }));
-      },
-      // onDone — mark streaming complete
-      () => {
-        setSessions(prev => prev.map(s => {
-          if (s.id !== sessionId) return s;
-          return {
-            ...s,
-            messages: s.messages.map(m =>
-              m.id === botMsgId ? { ...m, streaming: false } : m
-            ),
-          };
-        }));
-        setIsTyping(false);
-        streamingIdRef.current = null;
-      },
-      // onError
-      (errMsg) => {
-        const errMessage = {
-          role: 'error',
-          content: `⚠️ ${errMsg}`,
-          id: Date.now() + 2,
-        };
-        // Replace the empty placeholder with an error bubble
-        setSessions(prev => prev.map(s => {
-          if (s.id !== sessionId) return s;
-          return {
-            ...s,
-            messages: [
-              ...s.messages.filter(m => m.id !== botMsgId),
-              errMessage,
-            ],
-          };
-        }));
-        setIsTyping(false);
-        streamingIdRef.current = null;
-      }
-    );
+        
+        if (currentIndex >= fullText.length) {
+          clearInterval(intervalId);
+          setIsTyping(false);
+        }
+      }, 15); // Adjust typing speed here
+    } catch (err) {
+      const errMessage = {
+        role: 'error',
+        content: `⚠️ Error processing request`,
+        id: Date.now() + 2,
+      };
+      updateSession(sessionId, s => ({
+        ...s,
+        messages: [...s.messages, errMessage],
+      }));
+      setIsTyping(false);
+    }
   }, [activeSessionId, isTyping, updateSession]);
 
   return {
