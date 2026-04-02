@@ -1,0 +1,56 @@
+text,category
+"I feel stressed about my exams",stress
+"I am overwhelmed with work",stress
+"I have too much pressure",stress
+"I can't handle the workload",stress
+"I am burned out",stress
+"Everything feels too much",stress
+"I am anxious about deadlines",stress
+"I need help managing stress",stress
+"I feel mentally exhausted",stress
+"I have exam anxiety",stress
+"Help me with data structures",academic
+"Explain binary search trees",academic
+"What is dynamic programming",academic
+"How do I solve this algorithm",academic
+"Explain object oriented programming",academic
+"What is time complexity",academic
+"Help with calculus problem",academic
+"Explain integration by parts",academic
+"What is the chain rule",academic
+"How to study for physics exam",academic
+"Explain Newton's laws",academic
+"What is machine learning",academic
+"How does gradient descent work",academic
+"Explain SQL joins",academic
+"What is recursion in programming",academic
+"I am sad and unmotivated",motivation
+"I feel like giving up",motivation
+"I have no energy to study",motivation
+"I am losing hope",motivation
+"Nothing seems to work for me",motivation
+"I need encouragement",motivation
+"I feel depressed",motivation
+"I cannot find motivation to study",motivation
+"I am feeling low",motivation
+"I need someone to talk to",motivation
+"Give me study tips",tips
+"How to study effectively",tips
+"Best ways to memorize",tips
+"How to focus while studying",tips
+"Time management for students",tips
+"How to prepare for exams",tips
+"Best study techniques",tips
+"How to take better notes",tips
+"Pomodoro technique explained",tips
+"How to avoid distractions",tips
+"Hello there",general
+"Who are you",general
+"What can you do",general
+"Tell me a joke",general
+"What is the weather today",general
+"Good morning",general
+"How are you",general
+"What is your name",general
+"Can you help me",general
+"Thank you",general
