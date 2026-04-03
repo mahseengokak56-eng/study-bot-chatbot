@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8090";
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 console.log('API Base URL:', BASE_URL);
 
@@ -125,3 +125,6 @@ export const fetchAllSessions = async () => {
 export const deleteSession = async (sessionId) => {
   return { success: true };
 };
+
+// Export the api instance for direct use
+export { api };

@@ -6,6 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import MLPredictionBadge from './MLPredictionBadge';
 
 // ── Copy button for code blocks ───────────────────────────────────────────────
 function CopyButton({ code }) {
@@ -158,6 +159,13 @@ export default function Message({ message }) {
         isUser && "items-end",
         isBot && "items-start"
       )}>
+        {/* ML Category Badge - Only for bot messages */}
+        {isBot && message.predictedCategory && (
+          <div className="mb-2">
+            <MLPredictionBadge category={message.predictedCategory} showDetails={true} />
+          </div>
+        )}
+        
         {/* Message bubble */}
         <div className={clsx(
           "rounded-2xl text-sm md:text-base leading-relaxed w-full",

@@ -139,7 +139,7 @@ function StressPredictor({ onBack }) {
   const handlePredict = async () => {
     setLoading(true);
     try {
-      const response = await api.post('/stress-predict', inputs);
+      const response = await api.post('/api/stress-predict', inputs);
       setResult(response.data);
       toast.success('Stress level analyzed!');
     } catch (error) {
@@ -277,7 +277,7 @@ function PerformancePredictor({ onBack }) {
   const handlePredict = async () => {
     setLoading(true);
     try {
-      const response = await api.post('/performance-predict', inputs);
+      const response = await api.post('/api/performance-predict', inputs);
       setResult(response.data);
       toast.success('Performance analyzed!');
     } catch (error) {
@@ -424,7 +424,7 @@ function QuizGenerator({ onBack }) {
     }
     setLoading(true);
     try {
-      const response = await api.post('/quiz', { topic, difficulty, num_questions: numQuestions });
+      const response = await api.post('/api/quiz', { topic, difficulty, num_questions: numQuestions });
       setQuiz(response.data);
       setCurrentQuestion(0);
       setScore(0);
@@ -627,7 +627,7 @@ function NotesGenerator({ onBack }) {
     }
     setLoading(true);
     try {
-      const response = await api.post('/notes', { topic, detail_level: detailLevel });
+      const response = await api.post('/api/notes', { topic, detail_level: detailLevel });
       setNotes(response.data);
       toast.success('Notes generated!');
     } catch (error) {
@@ -769,7 +769,7 @@ function Dashboard() {
 
   useEffect(() => {
     if (activeView === 'stats') {
-      api.get('/dashboard').then(response => {
+      api.get('/api/dashboard').then(response => {
         setDashboardStats(response.data);
       }).catch(() => {
         toast.error('Failed to load dashboard stats');
