@@ -1,8 +1,11 @@
 fastapi
 uvicorn[standard]
+python-dotenv
+pymongo
+pydantic[email]
+bcrypt
+pyjwt
+scikit-learn
+# Optional: for LLM enhancement
 langchain
 langchain-groq
-pymongo
-python-dotenv
-python-multipart
-pydantic
