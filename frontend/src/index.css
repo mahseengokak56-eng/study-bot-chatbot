@@ -4,6 +4,30 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Dark mode (default) */
+:root {
+  --bg-color: #131314;
+  --surface-color: #1E1F20;
+  --hover-color: #333537;
+  --text-color: #E3E3E3;
+  --muted-color: #C4C7C5;
+  --border-color: #444746;
+  --user-bubble-color: #2B2D31;
+  --message-bot-color: #1E1F20;
+}
+
+/* Light mode */
+html.light {
+  --bg-color: #ffffff;
+  --surface-color: #f8f9fa;
+  --hover-color: #e8eaed;
+  --text-color: #1f1f1f;
+  --muted-color: #5f6368;
+  --border-color: #dadce0;
+  --user-bubble-color: #2d2d2d;
+  --message-bot-color: #f8f9fa;
+}
+
 @layer base {
   body {
     @apply bg-gemini-bg text-gemini-text font-sans antialiased m-0 p-0 overflow-hidden;
@@ -20,10 +44,10 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #444746;
+  background: var(--border-color);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #555857;
+  background: var(--muted-color);
 }

@@ -1,42 +1,127 @@
 import axios from 'axios';
 
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8090";
+
+console.log('API Base URL:', BASE_URL);
 
 const api = axios.create({
   baseURL: BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 10000,
 });
 
+// Add auth token to requests
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  console.log('API Request:', config.method?.toUpperCase(), config.url);
+  return config;
+});
+
+// Add response interceptor for error handling
+api.interceptors.response.use(
+  (response) => {
+    console.log('API Response:', response.status, response.config.url);
+    return response;
+  },
+  (error) => {
+    console.error('API Error:', error.message);
+    if (error.response) {
+      console.error('Error status:', error.response.status);
+      console.error('Error data:', error.response.data);
+    } else if (error.request) {
+      console.error('No response received - backend may be down');
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const registerUser = async (name, email, password) => {
-  const response = await api.post('/api/register', { name, email, password });
-  return response.data;
+  try {
+    console.log('Registering user:', email);
+    const response = await api.post('/api/register', { name, email, password });
+    console.log('Register response:', response.data);
+    if (response.data.access_token) {
+      localStorage.setItem('token', response.data.access_token);
+      localStorage.setItem('user', JSON.stringify({
+        id: response.data.user_id,
+        email: email,
+        name: name
+      }));
+    }
+    return response.data;
+  } catch (error) {
+    console.error('Register error:', error);
+    throw error;
+  }
 };
 
 export const loginUser = async (email, password) => {
-  const response = await api.post('/api/login', { email, password });
+  try {
+    console.log('Logging in user:', email);
+    const response = await api.post('/api/login', { email, password });
+    console.log('Login response:', response.data);
+    if (response.data.access_token) {
+      localStorage.setItem('token', response.data.access_token);
+      localStorage.setItem('user', JSON.stringify({
+        id: response.data.user_id,
+        email: email,
+        name: response.data.name
+      }));
+    }
+    return response.data;
+  } catch (error) {
+    console.error('Login error:', error);
+    throw error;
+  }
+};
+
+export const logoutUser = () => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+};
+
+export const getCurrentUser = () => {
+  const user = localStorage.getItem('user');
+  return user ? JSON.parse(user) : null;
+};
+
+export const isAuthenticated = () => {
+  return !!localStorage.getItem('token');
+};
+
+export const sendChatMessage = async (message, attachments = {}) => {
+  const { image, file } = attachments;
+  const payload = { message };
+  if (image) payload.has_image = true;
+  if (file) payload.has_file = true;
+  const response = await api.post('/api/chat', payload);
   return response.data;
 };
 
-export const sendChatMessage = async (message, sessionId) => {
-  const response = await api.post('/api/chat', { message, session_id: sessionId });
-  // Expecting returns { response: "...", predicted_category: "..." }
-  return response.data;
-};
-
-export const fetchSessionHistory = async (sessionId) => {
-  const response = await api.get('/api/history', { params: { session_id: sessionId } });
+export const fetchChatHistory = async () => {
+  const response = await api.get('/api/history');
   return response.data.messages || [];
 };
 
-// Dummy functions to support existing code until full refactor
+export const fetchUserStats = async () => {
+  const response = await api.get('/api/stats');
+  return response.data;
+};
+
+// Legacy functions
+export const fetchSessionHistory = async (sessionId) => {
+  return fetchChatHistory();
+};
+
 export const fetchAllSessions = async () => {
-  // Let's assume we store sessions in localstorage and just fetch history when active.
   return [];
 };
 
 export const deleteSession = async (sessionId) => {
-  // Not explicitly mentioned in new requirements, but keeping for compatibility.
   return { success: true };
 };

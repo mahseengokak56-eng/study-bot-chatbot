@@ -158,17 +158,11 @@ export default function Message({ message }) {
         isUser && "items-end",
         isBot && "items-start"
       )}>
-        {isBot && message.predictedCategory && (
-          <span className="text-[10px] uppercase font-bold tracking-wider text-purple-400 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded-full mb-1">
-            {message.predictedCategory}
-          </span>
-        )}
-        
         {/* Message bubble */}
         <div className={clsx(
           "rounded-2xl text-sm md:text-base leading-relaxed w-full",
           isBot && "text-gemini-text bg-transparent py-1",
-          isUser && "text-gray-100 bg-gemini-userBubble shadow-sm px-4 py-3",
+          isUser && "text-white bg-gemini-userBubble shadow-sm px-4 py-3",
           isError && "text-red-300 bg-red-950/40 border border-red-800/50 px-4 py-3"
         )}>
           {isBot ? (
@@ -179,7 +173,7 @@ export default function Message({ message }) {
               {message.content || ' '}
             </ReactMarkdown>
           ) : (
-            <p className="whitespace-pre-wrap">{message.content}</p>
+            <p className="whitespace-pre-wrap text-white">{message.content}</p>
           )}
         </div>
       </div>

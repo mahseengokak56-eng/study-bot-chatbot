@@ -4,18 +4,20 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
         gemini: {
-          bg: '#131314',
-          surface: '#1E1F20',
-          hover: '#333537',
-          text: '#E3E3E3',
-          muted: '#C4C7C5',
-          border: '#444746',
-          primary: '#A8C7FA', // Used for links or active states
-          userBubble: '#2B2D31'
+          bg: 'var(--bg-color)',
+          surface: 'var(--surface-color)',
+          hover: 'var(--hover-color)',
+          text: 'var(--text-color)',
+          muted: 'var(--muted-color)',
+          border: 'var(--border-color)',
+          primary: '#A8C7FA',
+          userBubble: 'var(--user-bubble-color)',
+          messageBot: 'var(--message-bot-color)'
         }
       },
       fontFamily: {

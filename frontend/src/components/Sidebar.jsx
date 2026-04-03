@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, MessageSquare, PanelLeftClose, Trash2, BookOpen } from 'lucide-react';
+import { Plus, MessageSquare, PanelLeftClose, Trash2, BookOpen, Brain, Sparkles } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -13,6 +13,7 @@ export default function Sidebar({
   toggleSidebar
 }) {
   const [hoveredId, setHoveredId] = useState(null);
+  const [predictionEnabled, setPredictionEnabled] = useState(true);
 
   return (
     <motion.div
@@ -37,8 +38,37 @@ export default function Sidebar({
         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
           <BookOpen size={16} className="text-white" strokeWidth={2} />
         </div>
-        <span className="text-gemini-text font-semibold text-sm tracking-wide">Study Bot</span>
+        <span className="text-gemini-text font-semibold text-sm tracking-wide">EduNova AI</span>
       </div>
+
+      {/* ML Prediction Feature Box */}
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-4 p-3 rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/20"
+      >
+        <div className="flex items-center gap-2 mb-2">
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+            <Brain size={14} className="text-white" />
+          </div>
+          <span className="text-sm font-semibold text-gemini-text">ML Prediction</span>
+          <Sparkles size={14} className="text-yellow-400" />
+        </div>
+        <p className="text-xs text-gemini-muted mb-3">
+          AI-powered message categorization for better responses
+        </p>
+        <button
+          onClick={() => setPredictionEnabled(!predictionEnabled)}
+          className={clsx(
+            "w-full py-1.5 px-3 rounded-lg text-xs font-medium transition-colors",
+            predictionEnabled 
+              ? "bg-green-500/20 text-green-400 border border-green-500/30" 
+              : "bg-gemini-hover text-gemini-muted border border-gemini-border"
+          )}
+        >
+          {predictionEnabled ? '✓ Enabled' : 'Disabled'}
+        </button>
+      </motion.div>
 
       {/* New Chat button */}
       <button

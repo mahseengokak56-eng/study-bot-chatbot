@@ -14,15 +14,11 @@ function Login() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      // Temporarily bypass real login if backend is not ready, or uncomment to test real backend
       await loginUser(email, password);
       toast.success('Login successful!');
-      navigate('/');
+      navigate('/dashboard');
     } catch (error) {
-      toast.error(error.message || 'Failed to login');
-      // For demonstration, navigate to dashboard anyway:
-      toast.success('Navigating to dashboard (Demo Mode)');
-      navigate('/');
+      toast.error(error.response?.data?.detail || error.message || 'Failed to login');
     } finally {
       setIsLoading(false);
     }

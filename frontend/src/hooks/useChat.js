@@ -61,12 +61,14 @@ export function useChat() {
     try { await deleteSession(sessionId); } catch { /* silent */ }
   }, [activeSessionId]);
 
-  const sendMessage = useCallback(async (text) => {
-    if (!text.trim() || isTyping) return;
+  const sendMessage = useCallback(async (text, attachments = {}) => {
+    const { image, file } = attachments;
+    if (!text.trim() && !image && !file || isTyping) return;
 
     const sessionId = activeSessionId;
+    const messageContent = text + (image ? '\n[Image attached]' : '') + (file ? `\n[File: ${file.name}]` : '');
 
-    const userMsg = { role: 'user', content: text, id: Date.now() };
+    const userMsg = { role: 'user', content: messageContent, id: Date.now(), image: image?.preview, file: file?.name };
     updateSession(sessionId, s => ({
       ...s,
       title: s.messages.length === 0
@@ -78,22 +80,12 @@ export function useChat() {
     setIsTyping(true);
 
     try {
-      // Attempt API call; fallback provided for local testing without backend
-      let fullText = "This is a fallback response since backend is not connected.";
-      let category = "General";
-      
-      try {
-        const response = await sendChatMessage(text, sessionId);
-        if (response.response) {
-            fullText = response.response;
-            category = response.predicted_category || "General";
-        }
-      } catch (apiErr) {
-        console.warn("API Error, using fallback response.", apiErr);
-      }
+      const response = await sendChatMessage(text, { image, file });
+      const fullText = response.response || "Sorry, I couldn't process that.";
+      const category = response.predicted_category || "general";
 
       const botMsgId = Date.now() + 1;
-      const botPlaceholder = { role: 'bot', content: '', id: botMsgId, predictedCategory: category };
+      const botPlaceholder = { role: 'bot', content: '', id: botMsgId, predictedCategory: category, predictedCategoryDisplay: category };
       updateSession(sessionId, s => ({
         ...s,
         messages: [...s.messages, botPlaceholder],
@@ -102,7 +94,7 @@ export function useChat() {
       // Simulate typing effect
       let currentIndex = 0;
       const intervalId = setInterval(() => {
-        currentIndex++;
+        currentIndex += 3; // Type faster
         setSessions(prev => prev.map(s => {
           if (s.id !== sessionId) return s;
           return {
@@ -119,11 +111,12 @@ export function useChat() {
           clearInterval(intervalId);
           setIsTyping(false);
         }
-      }, 15); // Adjust typing speed here
+      }, 10);
     } catch (err) {
+      console.error('Chat error:', err);
       const errMessage = {
         role: 'error',
-        content: `⚠️ Error processing request`,
+        content: `⚠️ Error: ${err.response?.data?.detail || err.message || 'Failed to get response'}`,
         id: Date.now() + 2,
       };
       updateSession(sessionId, s => ({

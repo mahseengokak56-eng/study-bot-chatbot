@@ -16,13 +16,10 @@ function Register() {
     setIsLoading(true);
     try {
       await registerUser(name, email, password);
-      toast.success('Registration successful! Please login.');
-      navigate('/login');
+      toast.success('Registration successful! Redirecting to dashboard...');
+      navigate('/dashboard');
     } catch (error) {
-      toast.error(error.message || 'Failed to register');
-      // For demonstration, navigate to login anyway:
-      toast.success('Navigating to login (Demo Mode)');
-      navigate('/login');
+      toast.error(error.response?.data?.detail || error.message || 'Failed to register');
     } finally {
       setIsLoading(false);
     }
