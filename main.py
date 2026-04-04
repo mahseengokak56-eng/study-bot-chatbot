@@ -34,7 +34,12 @@ from backend.auth.auth import (
 )
 from backend.db.db import (
     create_user, get_user_by_email, get_user_by_id,
-    save_chat, get_chat_history, get_user_stats
+    save_chat, get_chat_history, get_user_stats,
+    save_stress_prediction, save_performance_prediction,
+    get_stress_prediction_count, get_performance_prediction_count,
+    save_quiz_result, get_quiz_results, get_quiz_stats,
+    save_notes_history, get_notes_history,
+    save_uploaded_files, get_user_files
 )
 
 # ── Optional LLM support ────────────────────────────────────────────────────
@@ -384,6 +389,16 @@ async def stress_predict(
             sleep_hours=request.sleep_hours,
             screen_time=request.screen_time
         )
+        # Save prediction to database
+        save_stress_prediction(
+            user_id=current_user.user_id,
+            inputs={
+                "study_hours": request.study_hours,
+                "sleep_hours": request.sleep_hours,
+                "screen_time": request.screen_time
+            },
+            result=result
+        )
         return StressPredictResponse(**result)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
@@ -414,6 +429,16 @@ async def performance_predict(
             attendance=request.attendance,
             study_hours=request.study_hours,
             assignments_completed=request.assignments_completed
+        )
+        # Save prediction to database
+        save_performance_prediction(
+            user_id=current_user.user_id,
+            inputs={
+                "attendance": request.attendance,
+                "study_hours": request.study_hours,
+                "assignments_completed": request.assignments_completed
+            },
+            result=result
         )
         return PerformancePredictResponse(**result)
     except Exception as e:
@@ -650,6 +675,9 @@ class DashboardStatsResponse(BaseModel):
     top_topics: List[str]
     stress_predictions: int
     performance_predictions: int
+    total_quizzes: int
+    quiz_average: float
+    quiz_best_score: float
 
 @app.get("/api/dashboard", response_model=DashboardStatsResponse)
 async def get_dashboard_stats(current_user: TokenData = Depends(get_current_user)):
@@ -679,17 +707,479 @@ async def get_dashboard_stats(current_user: TokenData = Depends(get_current_user
         # Count unique topics
         top_topics = list(set(topics))[:5]
         
+        # Get prediction counts from database
+        stress_count = get_stress_prediction_count(current_user.user_id)
+        perf_count = get_performance_prediction_count(current_user.user_id)
+        
+        # Get quiz stats
+        quiz_stats = get_quiz_stats(current_user.user_id)
+        
         return DashboardStatsResponse(
-            total_queries=stats.get('total_messages', 0),
+            total_queries=stats.get('total_chats', 0),
             category_distribution=category_counts,
             recent_chats=history[:10],
             top_topics=top_topics,
-            stress_predictions=0,  # Would track from separate collection
-            performance_predictions=0  # Would track from separate collection
+            stress_predictions=stress_count,
+            performance_predictions=perf_count,
+            total_quizzes=quiz_stats.get('total_quizzes', 0),
+            quiz_average=quiz_stats.get('average_percentage', 0),
+            quiz_best_score=quiz_stats.get('best_score', 0)
         )
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Dashboard stats failed: {str(e)}")
+
+
+# ── File Upload API ──────────────────────────────────────────────────────────
+from fastapi import File, UploadFile
+from typing import List
+import io
+
+# Try to import PDF and DOCX extractors
+try:
+    import PyPDF2
+    PDF_SUPPORT = True
+except ImportError:
+    PDF_SUPPORT = False
+
+try:
+    import docx
+    DOCX_SUPPORT = True
+except ImportError:
+    DOCX_SUPPORT = False
+
+class FileUploadResponse(BaseModel):
+    file_ids: List[str]
+    files: List[dict]
+    message: str
+
+def extract_text_from_file(content: bytes, filename: str, content_type: str) -> str:
+    """Extract text content from various file types."""
+    text = ""
+    filename_lower = filename.lower()
+    
+    # Text files
+    if content_type and content_type.startswith('text/'):
+        text = content.decode('utf-8', errors='ignore')
+    elif filename_lower.endswith(('.txt', '.md', '.py', '.js', '.html', '.css', '.json', '.xml')):
+        text = content.decode('utf-8', errors='ignore')
+    
+    # PDF files
+    elif filename_lower.endswith('.pdf') and PDF_SUPPORT:
+        try:
+            pdf_file = io.BytesIO(content)
+            pdf_reader = PyPDF2.PdfReader(pdf_file)
+            for page in pdf_reader.pages:
+                page_text = page.extract_text()
+                if page_text:
+                    text += page_text + "\n"
+        except Exception as e:
+            print(f"PDF extraction error: {e}")
+            text = f"[PDF file: {filename}]"
+    elif filename_lower.endswith('.pdf') and not PDF_SUPPORT:
+        text = f"[PDF file: {filename} - install PyPDF2 for text extraction]"
+    
+    # Word documents
+    elif filename_lower.endswith('.docx') and DOCX_SUPPORT:
+        try:
+            doc_file = io.BytesIO(content)
+            doc = docx.Document(doc_file)
+            for para in doc.paragraphs:
+                if para.text:
+                    text += para.text + "\n"
+        except Exception as e:
+            print(f"DOCX extraction error: {e}")
+            text = f"[DOCX file: {filename}]"
+    elif filename_lower.endswith('.docx') and not DOCX_SUPPORT:
+        text = f"[DOCX file: {filename} - install python-docx for text extraction]"
+    
+    # Images - use filename as hint since we can't extract text without OCR
+    elif filename_lower.endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp')):
+        text = f"[Image file: {filename}]"
+    
+    # Return first 2000 chars for preview
+    return text[:2000] if text else ""
+
+@app.post("/api/upload", response_model=FileUploadResponse)
+async def upload_files(
+    files: List[UploadFile] = File(...),
+    current_user: TokenData = Depends(get_current_user)
+):
+    """Upload files (images, documents) for quiz or notes generation."""
+    try:
+        uploaded_files = []
+        
+        for file in files:
+            # Read file content
+            content = await file.read()
+            
+            # Extract text content using our new function
+            content_preview = extract_text_from_file(content, file.filename, file.content_type)
+            
+            file_info = {
+                "filename": file.filename,
+                "content_type": file.content_type or "application/octet-stream",
+                "size": len(content),
+                "content_preview": content_preview
+            }
+            uploaded_files.append(file_info)
+            print(f"Uploaded: {file.filename} ({len(content)} bytes), preview: {len(content_preview)} chars")
+        
+        # Save file metadata to database
+        file_ids = save_uploaded_files(current_user.user_id, uploaded_files)
+        
+        return FileUploadResponse(
+            file_ids=file_ids,
+            files=uploaded_files,
+            message=f"Successfully uploaded {len(files)} file(s)"
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"File upload failed: {str(e)}")
+
+
+# ── Quiz Results API ─────────────────────────────────────────────────────────
+class QuizResultRequest(BaseModel):
+    topic: str
+    difficulty: str
+    score: int
+    total_questions: int
+
+class QuizResultResponse(BaseModel):
+    result_id: str
+    message: str
+
+@app.post("/api/quiz-result", response_model=QuizResultResponse)
+async def save_quiz_result_endpoint(
+    request: QuizResultRequest,
+    current_user: TokenData = Depends(get_current_user)
+):
+    """Save quiz result after completion."""
+    try:
+        quiz_data = {
+            "topic": request.topic,
+            "difficulty": request.difficulty
+        }
+        result_id = save_quiz_result(
+            user_id=current_user.user_id,
+            quiz_data=quiz_data,
+            score=request.score,
+            total_questions=request.total_questions
+        )
+        return QuizResultResponse(
+            result_id=result_id,
+            message="Quiz result saved successfully"
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save quiz result: {str(e)}")
+
+
+class QuizStatsResponse(BaseModel):
+    total_quizzes: int
+    average_percentage: float
+    best_score: float
+    recent_results: List[dict]
+    improvement: dict
+
+@app.get("/api/quiz-stats", response_model=QuizStatsResponse)
+async def get_quiz_stats_endpoint(current_user: TokenData = Depends(get_current_user)):
+    """Get quiz statistics including improvement tracking."""
+    try:
+        stats = get_quiz_stats(current_user.user_id)
+        results = get_quiz_results(current_user.user_id, limit=10)
+        
+        # Calculate improvement trend
+        improvement = {"trend": "stable", "change": 0}
+        if len(results) >= 2:
+            recent_avg = sum(r.get("percentage", 0) for r in results[-3:]) / min(3, len(results[-3:]))
+            older_avg = sum(r.get("percentage", 0) for r in results[:max(1, len(results)-3)]) / max(1, len(results)-3)
+            change = recent_avg - older_avg
+            improvement = {
+                "trend": "improving" if change > 5 else "declining" if change < -5 else "stable",
+                "change": round(change, 2)
+            }
+        
+        return QuizStatsResponse(
+            total_quizzes=stats["total_quizzes"],
+            average_percentage=stats["average_percentage"],
+            best_score=stats["best_score"],
+            recent_results=stats["recent_results"],
+            improvement=improvement
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get quiz stats: {str(e)}")
+
+
+# ── Quiz with Files API ────────────────────────────────────────────────────
+class QuizWithFilesRequest(BaseModel):
+    file_ids: List[str]
+    difficulty: str = "medium"
+    num_questions: int = 5
+
+@app.post("/api/quiz-from-files", response_model=QuizResponse)
+async def generate_quiz_from_files(
+    request: QuizWithFilesRequest,
+    current_user: TokenData = Depends(get_current_user)
+):
+    """Generate a quiz based on uploaded file content."""
+    try:
+        # Get user's uploaded files
+        user_files = get_user_files(current_user.user_id)
+        
+        # Filter files by provided IDs
+        selected_files = [f for f in user_files if f.get("_id") in request.file_ids or f.get("file_id") in request.file_ids]
+        
+        # Combine content from files
+        combined_content = ""
+        for file in selected_files[:3]:  # Limit to first 3 files
+            preview = file.get("content_preview", "")
+            if preview:
+                combined_content += f"\n\n--- Content from {file.get('filename', 'document')} ---\n{preview}"
+        
+        if not combined_content:
+            # Fallback to generic quiz if no content
+            return await generate_quiz(
+                request=QuizRequest(topic="General Knowledge", difficulty=request.difficulty, num_questions=request.num_questions),
+                current_user=current_user
+            )
+        
+        if not llm:
+            # Fallback if LLM not available
+            return QuizResponse(
+                topic="Content from Uploaded Files",
+                questions=[
+                    QuizQuestion(
+                        question="What is the main topic covered in the uploaded files?",
+                        options=["Science", "Technology", "History", "General Knowledge"],
+                        correct_answer="General Knowledge",
+                        explanation="This is a sample question based on your uploaded content."
+                    )
+                ],
+                total_questions=1
+            )
+        
+        # Generate quiz using LLM based on file content
+        system_msg = f"""Based on the following content, create {request.num_questions} multiple choice questions at {request.difficulty} difficulty level.
+
+CONTENT:
+{combined_content[:3000]}
+
+Format each question as:
+Q: [Question text]
+A) [Option]
+B) [Option]
+C) [Option]
+D) [Option]
+Correct: [A/B/C/D]
+Explanation: [Brief explanation]
+
+Make questions based specifically on the provided content."""
+
+        messages = [
+            SystemMessage(content=system_msg),
+            HumanMessage(content="Generate a quiz based on this content")
+        ]
+        
+        response = llm.invoke(messages)
+        
+        # Parse questions
+        questions = []
+        lines = response.content.split('\n')
+        current_q = {}
+        
+        for line in lines:
+            line = line.strip()
+            if line.startswith('Q:'):
+                if current_q.get('question'):
+                    questions.append(current_q)
+                current_q = {'question': line[2:].strip(), 'options': []}
+            elif line.startswith(('A)', 'B)', 'C)', 'D)')):
+                current_q['options'].append(line[2:].strip())
+            elif line.startswith('Correct:'):
+                current_q['correct_answer'] = line[8:].strip()
+            elif line.startswith('Explanation:'):
+                current_q['explanation'] = line[12:].strip()
+        
+        if current_q.get('question'):
+            questions.append(current_q)
+        
+        # Format properly
+        formatted_questions = []
+        for q in questions[:request.num_questions]:
+            formatted_questions.append(QuizQuestion(
+                question=q.get('question', 'Sample question'),
+                options=q.get('options', ['A', 'B', 'C', 'D']),
+                correct_answer=q.get('correct_answer', 'A'),
+                explanation=q.get('explanation', 'No explanation available.')
+            ))
+        
+        return QuizResponse(
+            topic="Quiz from Uploaded Files",
+            questions=formatted_questions,
+            total_questions=len(formatted_questions)
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Quiz generation from files failed: {str(e)}")
+
+
+# ── Notes with Files API ───────────────────────────────────────────────────
+class NotesWithFilesRequest(BaseModel):
+    file_ids: List[str]
+    detail_level: str = "medium"
+
+@app.post("/api/notes-from-files", response_model=NotesResponse)
+async def generate_notes_from_files(
+    request: NotesWithFilesRequest,
+    current_user: TokenData = Depends(get_current_user)
+):
+    """Generate notes based on uploaded file content."""
+    try:
+        # Get user's uploaded files
+        user_files = get_user_files(current_user.user_id)
+        
+        # Filter files by provided IDs
+        selected_files = [f for f in user_files if f.get("_id") in request.file_ids or f.get("file_id") in request.file_ids]
+        
+        # Combine content from files
+        combined_content = ""
+        file_names = []
+        for file in selected_files[:3]:  # Limit to first 3 files
+            preview = file.get("content_preview", "")
+            if preview:
+                combined_content += f"\n\n--- {file.get('filename', 'Document')} ---\n{preview}"
+                file_names.append(file.get('filename', 'Document'))
+        
+        if not combined_content:
+            raise HTTPException(status_code=400, detail="No content found in selected files")
+        
+        if not llm:
+            # Fallback if LLM not available
+            return NotesResponse(
+                topic="Content from Uploaded Files",
+                heading=f"Notes: {', '.join(file_names[:2])}",
+                key_points=["Key point extracted from your files", "Another important concept"],
+                summary="These are notes generated from your uploaded content.",
+                full_content=f"# Notes from Uploaded Files\n\n{combined_content[:1000]}"
+            )
+        
+        # Generate notes using LLM
+        detail_instruction = {
+            "brief": "Provide a brief overview with 3-4 key points",
+            "medium": "Provide a comprehensive overview with 5-7 key points",
+            "detailed": "Provide detailed notes with 8-10 key points and examples"
+        }
+        
+        system_msg = f"""Based on the following content, create structured study notes.
+
+CONTENT:
+{combined_content[:4000]}
+
+{detail_instruction[request.detail_level]}
+
+Format your response as:
+HEADING: [Descriptive heading based on content]
+
+KEY POINTS:
+• [Point 1]
+• [Point 2]
+• [Point 3]
+...
+
+SUMMARY:
+[2-3 sentence summary]
+
+FULL NOTES:
+[Detailed content in markdown format based on the provided files]"""
+
+        messages = [
+            SystemMessage(content=system_msg),
+            HumanMessage(content="Generate study notes from this content")
+        ]
+        
+        response = llm.invoke(messages)
+        content = response.content
+        
+        # Parse response
+        heading = "Notes from Files"
+        key_points = []
+        summary = ""
+        
+        lines = content.split('\n')
+        section = None
+        
+        for line in lines:
+            line = line.strip()
+            if line.startswith('HEADING:'):
+                heading = line[8:].strip()
+            elif line.startswith('KEY POINTS:'):
+                section = 'key_points'
+            elif line.startswith('SUMMARY:'):
+                section = 'summary'
+            elif line.startswith('FULL NOTES:'):
+                section = 'full'
+            elif line.startswith('•') and section == 'key_points':
+                key_points.append(line[1:].strip())
+            elif section == 'summary' and line and not line.startswith('FULL'):
+                summary += line + ' '
+        
+        if not key_points:
+            key_points = ["Important concept from files", "Key information extracted"]
+        if not summary:
+            summary = "These notes summarize the content from your uploaded files."
+        
+        result = NotesResponse(
+            topic="Notes from Uploaded Files",
+            heading=heading,
+            key_points=key_points[:10],
+            summary=summary.strip(),
+            full_content=content
+        )
+        
+        # Save to history
+        file_ids_only = [f.get("_id") or f.get("file_id") for f in selected_files]
+        save_notes_history(
+            user_id=current_user.user_id,
+            topic=heading,
+            detail_level=request.detail_level,
+            notes_content={
+                "heading": heading,
+                "key_points": key_points,
+                "summary": summary.strip()
+            },
+            uploaded_files=file_ids_only
+        )
+        
+        return result
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Notes generation from files failed: {str(e)}")
+
+
+# ── Quiz & Notes History API ─────────────────────────────────────────────────
+@app.get("/api/quiz-history")
+async def get_quiz_history_endpoint(
+    limit: int = 20,
+    current_user: TokenData = Depends(get_current_user)
+):
+    """Get quiz history for the user."""
+    try:
+        history = get_quiz_results(current_user.user_id, limit=limit)
+        return {"quiz_history": history}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get quiz history: {str(e)}")
+
+
+@app.get("/api/notes-history")
+async def get_notes_history_endpoint(
+    limit: int = 20,
+    current_user: TokenData = Depends(get_current_user)
+):
+    """Get notes generation history for the user."""
+    try:
+        history = get_notes_history(current_user.user_id, limit=limit)
+        return {"notes_history": history}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get notes history: {str(e)}")
 
 
 # ── Legacy routes (for backward compatibility) ─────────────────────────────

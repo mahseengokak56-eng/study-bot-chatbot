@@ -113,6 +113,59 @@ export const fetchUserStats = async () => {
   return response.data;
 };
 
+// ── File Upload API ──────────────────────────────────────────────────────────
+export const uploadFiles = async (files) => {
+  const formData = new FormData();
+  files.forEach(file => {
+    formData.append('files', file);
+  });
+  const response = await api.post('/api/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
+  return response.data;
+};
+
+// ── Quiz Result Tracking API ────────────────────────────────────────────────
+export const saveQuizResult = async (quizData) => {
+  const response = await api.post('/api/quiz-result', quizData);
+  return response.data;
+};
+
+export const getQuizStats = async () => {
+  const response = await api.get('/api/quiz-stats');
+  return response.data;
+};
+
+export const getQuizHistory = async (limit = 20) => {
+  const response = await api.get(`/api/quiz-history?limit=${limit}`);
+  return response.data;
+};
+
+export const generateQuizFromFiles = async (fileIds, difficulty = 'medium', numQuestions = 5) => {
+  const response = await api.post('/api/quiz-from-files', {
+    file_ids: fileIds,
+    difficulty,
+    num_questions: numQuestions
+  });
+  return response.data;
+};
+
+// ── Notes History API ───────────────────────────────────────────────────────
+export const getNotesHistory = async (limit = 20) => {
+  const response = await api.get(`/api/notes-history?limit=${limit}`);
+  return response.data;
+};
+
+export const generateNotesFromFiles = async (fileIds, detailLevel = 'medium') => {
+  const response = await api.post('/api/notes-from-files', {
+    file_ids: fileIds,
+    detail_level: detailLevel
+  });
+  return response.data;
+};
+
 // Legacy functions
 export const fetchSessionHistory = async (sessionId) => {
   return fetchChatHistory();
