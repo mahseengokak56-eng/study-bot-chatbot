@@ -6,6 +6,7 @@ pydantic[email]
 bcrypt
 pyjwt
 scikit-learn
+python-multipart
 # Optional: for LLM enhancement
 langchain
 langchain-groq
