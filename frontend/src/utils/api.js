@@ -9,7 +9,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000,
+  timeout: 30000, // 30 seconds for Render cold start
 });
 
 // Add auth token to requests
@@ -42,8 +42,10 @@ api.interceptors.response.use(
 
 export const registerUser = async (name, email, password) => {
   try {
-    console.log('Registering user:', email);
-    const response = await api.post('/api/register', { name, email, password });
+    console.log('Registering user:', email, 'to:', BASE_URL);
+    const response = await api.post('/api/register', { name, email, password }, {
+      timeout: 30000 // Longer timeout for registration
+    });
     console.log('Register response:', response.data);
     if (response.data.access_token) {
       localStorage.setItem('token', response.data.access_token);
@@ -56,6 +58,12 @@ export const registerUser = async (name, email, password) => {
     return response.data;
   } catch (error) {
     console.error('Register error:', error);
+    if (error.code === 'ECONNABORTED') {
+      throw new Error('Server is starting up, please try again in 30 seconds');
+    }
+    if (error.response?.status === 500) {
+      throw new Error('Server error, please try again');
+    }
     throw error;
   }
 };
