@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Use the deployed backend URL
-const BASE_URL = "https://study-bot-api-r6ad.onrender.com";
+const BASE_URL = "https://study-bot-api-jfo1.onrender.com";
 
 console.log('API Base URL:', BASE_URL);
 
