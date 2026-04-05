@@ -59,7 +59,7 @@ export const registerUser = async (name, email, password) => {
   } catch (error) {
     console.error('Register error:', error);
     if (error.code === 'ECONNABORTED') {
-      throw new Error('Server is starting up, please try again in 30 seconds');
+      throw new Error('Connecting to server... Please wait a moment and try again.');
     }
     if (error.response?.status === 500) {
       throw new Error('Server error, please try again');

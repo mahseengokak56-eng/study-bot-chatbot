@@ -3,6 +3,50 @@ import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { registerUser } from '../utils/api';
+import MagicalCursor from './MagicalCursor';
+import { Sparkles, Droplets } from 'lucide-react';
+
+// Water Droplets Component
+const WaterDroplets = () => {
+  const droplets = Array.from({ length: 12 }, (_, i) => ({
+    id: i,
+    size: Math.random() * 16 + 8,
+    left: `${Math.random() * 80 + 10}%`,
+    delay: Math.random() * 4,
+    duration: Math.random() * 3 + 3,
+  }));
+
+  return (
+    <div className="absolute right-0 top-0 h-full w-24 pointer-events-none overflow-hidden z-0">
+      {droplets.map((droplet) => (
+        <motion.div
+          key={droplet.id}
+          className="absolute rounded-full bg-gradient-to-br from-blue-400/40 to-cyan-300/30 backdrop-blur-sm"
+          style={{
+            width: droplet.size,
+            height: droplet.size,
+            left: droplet.left,
+            boxShadow: '0 0 15px rgba(59, 130, 246, 0.4), inset 0 0 8px rgba(255,255,255,0.2)',
+          }}
+          initial={{ y: -30, opacity: 0 }}
+          animate={{
+            y: ['0vh', '100vh'],
+            opacity: [0, 0.8, 0.8, 0],
+            scale: [0.6, 1, 1, 0.7],
+          }}
+          transition={{
+            duration: droplet.duration,
+            delay: droplet.delay,
+            repeat: Infinity,
+            ease: 'linear',
+          }}
+        >
+          <div className="absolute top-1 left-1 w-1/3 h-1/3 rounded-full bg-white/30" />
+        </motion.div>
+      ))}
+    </div>
+  );
+};
 
 function Register() {
   const navigate = useNavigate();
@@ -26,7 +70,9 @@ function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gemini-bg p-4 overflow-hidden relative">
+    <div className="min-h-screen flex items-center justify-center bg-gemini-bg p-4 overflow-hidden relative cursor-none">
+      <MagicalCursor />
+      
       {/* Subtle Background Animation */}
       <motion.div
         className="absolute w-[600px] h-[600px] bg-purple-500/10 blur-[120px] rounded-full top-0 left-0"
@@ -45,13 +91,24 @@ function Register() {
         transition={{ duration: 11, repeat: Infinity, ease: "easeInOut", delay: 1 }}
       />
 
+      {/* Water Droplets - Right Side */}
+      <WaterDroplets />
+
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="w-full max-w-md bg-gemini-message-bot p-8 rounded-2xl shadow-2xl z-10 border border-gemini-border"
+        className="w-full max-w-md bg-gemini-message-bot p-8 rounded-2xl shadow-2xl z-10 border border-gemini-border relative"
       >
+        {/* Header with Sparkle Icon */}
         <div className="text-center mb-8">
+          <motion.div
+            className="w-14 h-14 mx-auto mb-4 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          >
+            <Sparkles className="w-7 h-7 text-white" />
+          </motion.div>
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-blue-500 mb-2">
             Join EduNova
           </h1>
@@ -96,10 +153,10 @@ function Register() {
           </div>
 
           <motion.button
-            whileHover={{ scale: 1.02 }}
+            whileHover={{ scale: 1.02, boxShadow: '0 0 20px rgba(147, 51, 234, 0.3)' }}
             whileTap={{ scale: 0.98 }}
             disabled={isLoading}
-            className="w-full py-3 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium hover:from-purple-500 hover:to-blue-500 transition-all flex items-center justify-center gap-2 mt-2"
+            className="w-full py-3 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium hover:from-purple-500 hover:to-blue-500 transition-all flex items-center justify-center gap-2 mt-2 disabled:opacity-50"
           >
             {isLoading ? (
               <motion.div
