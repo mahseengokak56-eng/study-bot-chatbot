@@ -1,8 +1,54 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
+import { Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { loginUser } from '../utils/api';
+import MagicalCursor from './MagicalCursor';
+
+// Full Page Moving Water Ripples
+const FullPageWaterRipples = () => {
+  const rippleSources = [
+    { id: 1, startX: '10%', startY: '20%', delay: 0 },
+    { id: 2, startX: '90%', startY: '30%', delay: 2 },
+    { id: 3, startX: '20%', startY: '70%', delay: 4 },
+    { id: 4, startX: '80%', startY: '80%', delay: 6 },
+    { id: 5, startX: '50%', startY: '50%', delay: 8 },
+    { id: 6, startX: '15%', startY: '85%', delay: 10 },
+  ];
+
+  return (
+    <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+      {rippleSources.map((source) => (
+        <div
+          key={source.id}
+          className="absolute"
+          style={{ left: source.startX, top: source.startY }}
+        >
+          {[0, 1, 2, 3, 4].map((index) => (
+            <motion.div
+              key={index}
+              className="absolute rounded-full border-2 border-blue-400/20"
+              style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
+              initial={{ width: 0, height: 0, opacity: 0.6 }}
+              animate={{
+                width: [0, 100, 200, 300, 400],
+                height: [0, 100, 200, 300, 400],
+                opacity: [0.6, 0.4, 0.2, 0.1, 0],
+              }}
+              transition={{
+                duration: 4,
+                delay: source.delay + index * 0.8,
+                repeat: Infinity,
+                ease: "easeOut",
+              }}
+            />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+};
 
 function Login() {
   const navigate = useNavigate();
@@ -25,8 +71,13 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gemini-bg p-4 overflow-hidden relative">
-      {/* Subtle Background Animation */}
+    <div className="min-h-screen flex items-center justify-center bg-gemini-bg p-4 overflow-y-auto touch-auto relative cursor-none" style={{ touchAction: 'pan-y' }}>
+      <MagicalCursor />
+      
+      {/* Full Page Water Ripples */}
+      <FullPageWaterRipples />
+      
+      {/* Background Animations */}
       <motion.div
         className="absolute w-[500px] h-[500px] bg-blue-500/10 blur-[100px] rounded-full"
         animate={{
@@ -51,6 +102,14 @@ function Login() {
         className="w-full max-w-md bg-gemini-message-bot p-8 rounded-2xl shadow-2xl z-10 border border-gemini-border"
       >
         <div className="text-center mb-8">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.2 }}
+            className="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-2xl bg-gradient-to-br from-blue-500/20 to-purple-500/20"
+          >
+            <Sparkles className="w-8 h-8 text-blue-400" />
+          </motion.div>
           <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500 mb-2">
             EduNova AI
           </h1>

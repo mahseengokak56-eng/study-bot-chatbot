@@ -6,55 +6,55 @@ import { registerUser } from '../utils/api';
 import MagicalCursor from './MagicalCursor';
 import { Sparkles, Droplets } from 'lucide-react';
 
-// Water Ripple Component - like stone thrown in water
-const WaterRipples = () => {
-  const ripples = Array.from({ length: 5 }, (_, i) => ({
-    id: i,
-    delay: i * 0.8,
-    duration: 2.5,
-  }));
+// Full Page Moving Water Ripples - like stones thrown in water across the entire page
+const FullPageWaterRipples = () => {
+  // Create multiple ripple sources that move around the page
+  const rippleSources = [
+    { id: 1, startX: '10%', startY: '20%', delay: 0 },
+    { id: 2, startX: '90%', startY: '30%', delay: 2 },
+    { id: 3, startX: '20%', startY: '70%', delay: 4 },
+    { id: 4, startX: '80%', startY: '80%', delay: 6 },
+    { id: 5, startX: '50%', startY: '50%', delay: 8 },
+    { id: 6, startX: '15%', startY: '85%', delay: 10 },
+  ];
 
   return (
-    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full pointer-events-none overflow-visible">
-      {ripples.map((ripple) => (
-        <motion.div
-          key={ripple.id}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-blue-400/30"
-          initial={{ width: 0, height: 0, opacity: 0.8 }}
-          animate={{ 
-            width: [0, 80, 150, 200],
-            height: [0, 80, 150, 200],
-            opacity: [0.8, 0.4, 0.2, 0],
-          }}
-          transition={{
-            duration: ripple.duration,
-            delay: ripple.delay,
-            repeat: Infinity,
-            ease: "easeOut",
-          }}
+    <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+      {rippleSources.map((source) => (
+        <div
+          key={source.id}
+          className="absolute"
           style={{
-            boxShadow: '0 0 20px rgba(59, 130, 246, 0.3), inset 0 0 20px rgba(59, 130, 246, 0.1)',
+            left: source.startX,
+            top: source.startY,
           }}
-        />
+        >
+          {/* Multiple expanding circles for each source */}
+          {[0, 1, 2, 3, 4].map((index) => (
+            <motion.div
+              key={index}
+              className="absolute rounded-full border-2 border-blue-400/20"
+              style={{
+                left: '50%',
+                top: '50%',
+                transform: 'translate(-50%, -50%)',
+              }}
+              initial={{ width: 0, height: 0, opacity: 0.6 }}
+              animate={{
+                width: [0, 100, 200, 300, 400],
+                height: [0, 100, 200, 300, 400],
+                opacity: [0.6, 0.4, 0.2, 0.1, 0],
+              }}
+              transition={{
+                duration: 4,
+                delay: source.delay + index * 0.8,
+                repeat: Infinity,
+                ease: "easeOut",
+              }}
+            />
+          ))}
+        </div>
       ))}
-    </div>
-  );
-};
-
-// Left Side Water Ripples
-const LeftWaterRipples = () => {
-  return (
-    <div className="absolute left-[-100px] top-1/2 -translate-y-1/2 w-48 h-96 pointer-events-none">
-      <WaterRipples />
-    </div>
-  );
-};
-
-// Right Side Water Ripples
-const RightWaterRipples = () => {
-  return (
-    <div className="absolute right-[-100px] top-1/2 -translate-y-1/2 w-48 h-96 pointer-events-none">
-      <WaterRipples />
     </div>
   );
 };
@@ -81,7 +81,7 @@ function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gemini-bg p-4 overflow-hidden relative cursor-none">
+    <div className="min-h-screen flex items-center justify-center bg-gemini-bg p-4 overflow-y-auto touch-auto relative cursor-none" style={{ touchAction: 'pan-y' }}>
       <MagicalCursor />
       
       {/* Subtle Background Animation */}
@@ -102,11 +102,8 @@ function Register() {
         transition={{ duration: 11, repeat: Infinity, ease: "easeInOut", delay: 1 }}
       />
 
-      {/* Left Side Water Ripples */}
-      <LeftWaterRipples />
-      
-      {/* Right Side Water Ripples */}
-      <RightWaterRipples />
+      {/* Full Page Water Ripples */}
+      <FullPageWaterRipples />
 
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}

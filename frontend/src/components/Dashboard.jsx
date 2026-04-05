@@ -678,7 +678,7 @@ function QuizGenerator({ onBack }) {
           animate={{ opacity: 1, y: 0 }}
         >
           <div className="space-y-4">
-            {/* File Upload */}
+            {/* File Upload - Mobile Friendly */}
             <div>
               <label className="block text-sm text-gray-400 mb-2">Upload Files (Images, Documents, Text files)</label>
               <div className="relative">
@@ -686,17 +686,17 @@ function QuizGenerator({ onBack }) {
                   type="file"
                   multiple
                   onChange={handleFileUpload}
-                  className="hidden"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                   id="quiz-file-upload"
                   accept=".txt,.md,.pdf,.png,.jpg,.jpeg,.gif,.webp,.doc,.docx"
+                  style={{ touchAction: 'manipulation' }}
                 />
-                <label
-                  htmlFor="quiz-file-upload"
-                  className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-white/5 border border-white/10 border-dashed rounded-xl cursor-pointer hover:bg-white/10 transition-colors"
+                <div
+                  className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-white/5 border border-white/10 border-dashed rounded-xl hover:bg-white/10 transition-colors"
                 >
                   <Upload size={20} className="text-purple-400" />
                   <span className="text-gray-400">Click to upload files or folders</span>
-                </label>
+                </div>
               </div>
             </div>
 
@@ -1180,28 +1180,26 @@ function NotesGenerator({ onBack }) {
           animate={{ opacity: 1, y: 0 }}
         >
           <div className="space-y-4">
-            {/* File Upload */}
+            {/* File Upload - Mobile Friendly */}
             <div>
-              <label className="block text-sm text-gray-400 mb-2">Upload Files (Text, PDF, Images, Documents)</label>
+              <label className="block text-sm text-gray-400 mb-2">Upload Files (Images, Documents, Text files)</label>
               <div className="relative">
                 <input
                   type="file"
                   multiple
                   onChange={handleFileUpload}
-                  className="hidden"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                   id="notes-file-upload"
+                  accept=".txt,.md,.pdf,.png,.jpg,.jpeg,.gif,.webp,.doc,.docx"
+                  style={{ touchAction: 'manipulation' }}
                 />
-                <label
-                  htmlFor="notes-file-upload"
-                  className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-white/5 border border-dashed border-white/20 rounded-xl cursor-pointer hover:bg-white/10 transition-colors"
+                <div
+                  className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-white/5 border border-white/10 border-dashed rounded-xl hover:bg-white/10 transition-colors"
                 >
                   <Upload size={20} className="text-green-400" />
-                  <span className="text-gray-400">Click to upload files</span>
-                </label>
+                  <span className="text-gray-400">Click to upload files or folders</span>
+                </div>
               </div>
-              <p className="text-xs text-gray-500 mt-2">
-                Supports: Images, PDFs, Documents, Text files. Select multiple files at once.
-              </p>
             </div>
 
             {/* Uploaded Files List - Enhanced */}
