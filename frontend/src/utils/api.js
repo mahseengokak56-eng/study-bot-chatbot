@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+// Use the deployed backend URL
+const BASE_URL = "https://study-bot-api-r6ad.onrender.com";
 
 console.log('API Base URL:', BASE_URL);
 
@@ -40,11 +41,12 @@ api.interceptors.response.use(
   }
 );
 
-export const registerUser = async (name, email, password) => {
+export const registerUser = async (name, email, password, retryCount = 0) => {
+  const maxRetries = 2;
   try {
-    console.log('Registering user:', email, 'to:', BASE_URL);
+    console.log('Registering user:', email, 'to:', BASE_URL, 'attempt:', retryCount + 1);
     const response = await api.post('/api/register', { name, email, password }, {
-      timeout: 30000 // Longer timeout for registration
+      timeout: 45000 // 45 seconds for Render cold start
     });
     console.log('Register response:', response.data);
     if (response.data.access_token) {
@@ -58,8 +60,13 @@ export const registerUser = async (name, email, password) => {
     return response.data;
   } catch (error) {
     console.error('Register error:', error);
+    if (error.code === 'ECONNABORTED' && retryCount < maxRetries) {
+      console.log(`Retrying registration... (${retryCount + 1}/${maxRetries})`);
+      await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before retry
+      return registerUser(name, email, password, retryCount + 1);
+    }
     if (error.code === 'ECONNABORTED') {
-      throw new Error('Connecting to server... Please wait a moment and try again.');
+      throw new Error('Server is waking up. Please click Register again in a few seconds.');
     }
     if (error.response?.status === 500) {
       throw new Error('Server error, please try again');

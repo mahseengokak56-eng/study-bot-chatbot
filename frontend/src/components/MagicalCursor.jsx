@@ -85,12 +85,12 @@ function MagicalCursor() {
         </motion.div>
       ))}
 
-      {/* Outer Glow Ring - No blinking, smooth glow */}
+      {/* Outer Glow Ring - No blinking, smooth glow - CENTERED on cursor */}
       <motion.div
         className="fixed pointer-events-none z-[9997] rounded-full hidden md:block"
         animate={{ 
-          x: position.x - 25, 
-          y: position.y - 25,
+          left: position.x - 25, 
+          top: position.y - 25,
           scale: isHovering ? 1.2 : isClicking ? 0.9 : 1,
         }}
         transition={{ type: "spring", stiffness: 150, damping: 15 }}
@@ -102,12 +102,12 @@ function MagicalCursor() {
         }}
       />
 
-      {/* Middle Ring - Smooth rotation */}
+      {/* Middle Ring - Smooth rotation - CENTERED on cursor */}
       <motion.div
         className="fixed pointer-events-none z-[9998] rounded-full border-2 border-purple-400/40 hidden md:block"
         animate={{ 
-          x: position.x - 16, 
-          y: position.y - 16,
+          left: position.x - 16, 
+          top: position.y - 16,
           scale: isHovering ? 1.3 : isClicking ? 0.95 : 1,
           rotate: isHovering ? 90 : 0,
         }}
@@ -118,12 +118,12 @@ function MagicalCursor() {
         }}
       />
 
-      {/* Inner Ring */}
+      {/* Inner Ring - CENTERED on cursor */}
       <motion.div
         className="fixed pointer-events-none z-[9998] rounded-full border border-blue-400/60 hidden md:block"
         animate={{ 
-          x: position.x - 10, 
-          y: position.y - 10,
+          left: position.x - 10, 
+          top: position.y - 10,
           scale: isHovering ? 0.9 : isClicking ? 1.1 : 1,
           rotate: isHovering ? -45 : 0,
         }}
@@ -134,12 +134,12 @@ function MagicalCursor() {
         }}
       />
 
-      {/* Core Dot with Stable Glow */}
+      {/* Core Dot with Stable Glow - CENTERED on cursor */}
       <motion.div
         className="fixed pointer-events-none z-[9999] rounded-full hidden md:block"
         animate={{ 
-          x: position.x - 5, 
-          y: position.y - 5,
+          left: position.x - 5, 
+          top: position.y - 5,
           scale: isHovering ? 1.8 : isClicking ? 0.7 : 1,
         }}
         transition={{ type: "spring", stiffness: 400, damping: 25 }}

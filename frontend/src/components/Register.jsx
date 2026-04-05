@@ -6,44 +6,55 @@ import { registerUser } from '../utils/api';
 import MagicalCursor from './MagicalCursor';
 import { Sparkles, Droplets } from 'lucide-react';
 
-// Water Droplets Component
-const WaterDroplets = () => {
-  const droplets = Array.from({ length: 12 }, (_, i) => ({
+// Water Ripple Component - like stone thrown in water
+const WaterRipples = () => {
+  const ripples = Array.from({ length: 5 }, (_, i) => ({
     id: i,
-    size: Math.random() * 16 + 8,
-    left: `${Math.random() * 80 + 10}%`,
-    delay: Math.random() * 4,
-    duration: Math.random() * 3 + 3,
+    delay: i * 0.8,
+    duration: 2.5,
   }));
 
   return (
-    <div className="absolute right-0 top-0 h-full w-24 pointer-events-none overflow-hidden z-0">
-      {droplets.map((droplet) => (
+    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full pointer-events-none overflow-visible">
+      {ripples.map((ripple) => (
         <motion.div
-          key={droplet.id}
-          className="absolute rounded-full bg-gradient-to-br from-blue-400/40 to-cyan-300/30 backdrop-blur-sm"
-          style={{
-            width: droplet.size,
-            height: droplet.size,
-            left: droplet.left,
-            boxShadow: '0 0 15px rgba(59, 130, 246, 0.4), inset 0 0 8px rgba(255,255,255,0.2)',
-          }}
-          initial={{ y: -30, opacity: 0 }}
-          animate={{
-            y: ['0vh', '100vh'],
-            opacity: [0, 0.8, 0.8, 0],
-            scale: [0.6, 1, 1, 0.7],
+          key={ripple.id}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-blue-400/30"
+          initial={{ width: 0, height: 0, opacity: 0.8 }}
+          animate={{ 
+            width: [0, 80, 150, 200],
+            height: [0, 80, 150, 200],
+            opacity: [0.8, 0.4, 0.2, 0],
           }}
           transition={{
-            duration: droplet.duration,
-            delay: droplet.delay,
+            duration: ripple.duration,
+            delay: ripple.delay,
             repeat: Infinity,
-            ease: 'linear',
+            ease: "easeOut",
           }}
-        >
-          <div className="absolute top-1 left-1 w-1/3 h-1/3 rounded-full bg-white/30" />
-        </motion.div>
+          style={{
+            boxShadow: '0 0 20px rgba(59, 130, 246, 0.3), inset 0 0 20px rgba(59, 130, 246, 0.1)',
+          }}
+        />
       ))}
+    </div>
+  );
+};
+
+// Left Side Water Ripples
+const LeftWaterRipples = () => {
+  return (
+    <div className="absolute left-[-100px] top-1/2 -translate-y-1/2 w-48 h-96 pointer-events-none">
+      <WaterRipples />
+    </div>
+  );
+};
+
+// Right Side Water Ripples
+const RightWaterRipples = () => {
+  return (
+    <div className="absolute right-[-100px] top-1/2 -translate-y-1/2 w-48 h-96 pointer-events-none">
+      <WaterRipples />
     </div>
   );
 };
@@ -91,8 +102,11 @@ function Register() {
         transition={{ duration: 11, repeat: Infinity, ease: "easeInOut", delay: 1 }}
       />
 
-      {/* Water Droplets - Right Side */}
-      <WaterDroplets />
+      {/* Left Side Water Ripples */}
+      <LeftWaterRipples />
+      
+      {/* Right Side Water Ripples */}
+      <RightWaterRipples />
 
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
