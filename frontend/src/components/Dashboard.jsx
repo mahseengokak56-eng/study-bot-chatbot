@@ -542,7 +542,9 @@ function QuizGenerator({ onBack }) {
   const handleAnswer = (option) => {
     setSelectedAnswer(option);
     const isCorrect = option === quiz.questions[currentQuestion].correct_answer;
-    if (isCorrect) setScore(score + 1);
+    if (isCorrect) {
+      setScore(prevScore => prevScore + 1);
+    }
     
     setTimeout(() => {
       if (currentQuestion < quiz.questions.length - 1) {
@@ -558,7 +560,8 @@ function QuizGenerator({ onBack }) {
 
   const saveQuizResultToDB = async () => {
     try {
-      const finalScore = score + (selectedAnswer === quiz.questions[currentQuestion].correct_answer ? 1 : 0);
+      // Use the current score directly - no need to add anything
+      const finalScore = score;
       await saveQuizResult({
         topic: quiz.topic,
         difficulty: difficulty,
@@ -1543,7 +1546,7 @@ function Dashboard() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
               >
-                <div className="flex-1 overflow-hidden">
+                <div className="flex-1 overflow-y-auto">
                   <ChatContainer
                     messages={activeSession?.messages || []}
                     isTyping={isTyping}
