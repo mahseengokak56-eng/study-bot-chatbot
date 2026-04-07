@@ -550,35 +550,6 @@ function QuizGenerator({ onBack }) {
     setLoading(false);
   };
 
-  const handleAnswer = (option) => {
-    setSelectedAnswer(option);
-    const correctAnswer = quiz.questions[currentQuestion].correct_answer;
-    const isCorrect = option === correctAnswer;
-    
-    console.log('Selected:', option, '| Correct:', correctAnswer, '| IsCorrect:', isCorrect);
-    
-    if (isCorrect) {
-      const newScore = score + 1;
-      setScore(newScore);
-      scoreRef.current = newScore;
-      console.log('Score updated to:', newScore);
-    }
-    
-    setTimeout(() => {
-      if (currentQuestion < quiz.questions.length - 1) {
-        setCurrentQuestion(prev => prev + 1);
-        setSelectedAnswer(null);
-      } else {
-        setShowResult(true);
-        console.log('Final score being saved:', scoreRef.current);
-        saveQuizResultToDB(scoreRef.current);
-      }
-    }, 1500);
-  };
-
-  const saveQuizResultToDB = async (finalScore) => {
-    try {
-      await saveQuizResult({
         topic: quiz.topic,
         difficulty: difficulty,
         score: finalScore,
