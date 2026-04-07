@@ -129,7 +129,16 @@ export const fetchUserStats = async () => {
 };
 
 // ── File Upload API ──────────────────────────────────────────────────────────
-export const uploadFiles = async (files) => {
+// Check if backend is awake
+export const checkBackendHealth = async () => {
+  try {
+    const response = await api.get('/health', { timeout: 30000 });
+    return response.data.status === 'healthy';
+  } catch (error) {
+    console.log('Backend health check failed:', error);
+    return false;
+  }
+};
   const formData = new FormData();
   files.forEach(file => {
     formData.append('files', file);

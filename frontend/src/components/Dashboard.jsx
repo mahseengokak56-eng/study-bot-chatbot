@@ -541,7 +541,14 @@ function QuizGenerator({ onBack }) {
 
   const handleAnswer = (option) => {
     setSelectedAnswer(option);
-    const isCorrect = option === quiz.questions[currentQuestion].correct_answer;
+    const correctAnswer = quiz.questions[currentQuestion].correct_answer;
+    const isCorrect = option === correctAnswer;
+    
+    // DEBUG
+    console.log('Selected:', option);
+    console.log('Correct:', correctAnswer);
+    console.log('Is Correct:', isCorrect);
+    
     if (isCorrect) {
       setScore(prevScore => prevScore + 1);
     }
