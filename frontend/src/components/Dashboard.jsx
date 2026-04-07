@@ -14,7 +14,7 @@ import {
   Award, BarChart3, X
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { logoutUser, getCurrentUser, api, uploadFiles, saveQuizResult, getQuizStats, getQuizHistory, getNotesHistory, generateQuizFromFiles, generateNotesFromFiles } from '../utils/api';
+import { logoutUser, getCurrentUser, api, uploadFiles, checkBackendHealth, saveQuizResult, getQuizStats, getQuizHistory, getNotesHistory, generateQuizFromFiles, generateNotesFromFiles } from '../utils/api';
 import toast from 'react-hot-toast';
 
 // Dashboard Stats Component
