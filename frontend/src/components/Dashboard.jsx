@@ -1093,30 +1093,6 @@ function NotesGenerator({ onBack }) {
     setLoading(false);
   };
 
-  const handleGenerateFromFiles = async () => {
-    console.log('handleGenerateFromFiles called, fileIds:', fileIds);
-    if (fileIds.length === 0) {
-      toast.error('Please upload files first');
-      return;
-    }
-    setLoading(true);
-    try {
-      console.log('Calling generateNotesFromFiles with:', { fileIds, detailLevel });
-      const data = await generateNotesFromFiles(fileIds, detailLevel);
-      console.log('Notes generated successfully:', data);
-      setNotes(data);
-      toast.success('Notes generated from your files!');
-      loadNotesHistory();
-    } catch (error) {
-      console.error('Failed to generate notes:', error);
-      console.error('Error response data:', error.response?.data);
-      console.error('Error message:', error.message);
-      const errorMsg = error.response?.data?.detail || error.message || 'Failed to generate notes from files';
-      toast.error(errorMsg);
-    }
-    setLoading(false);
-  };
-
   const removeFile = (index) => {
     const newFiles = [...uploadedFiles];
     const newIds = [...fileIds];
