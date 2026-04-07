@@ -445,6 +445,7 @@ function QuizGenerator({ onBack }) {
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
+  const scoreRef = useRef(0);
   const [activeTab, setActiveTab] = useState('generate'); // 'generate', 'files', 'history', 'stats'
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [fileIds, setFileIds] = useState([]);
@@ -554,8 +555,13 @@ function QuizGenerator({ onBack }) {
     const correctAnswer = quiz.questions[currentQuestion].correct_answer;
     const isCorrect = option === correctAnswer;
     
+    console.log('Selected:', option, '| Correct:', correctAnswer, '| IsCorrect:', isCorrect);
+    
     if (isCorrect) {
-      setScore(prevScore => prevScore + 1);
+      const newScore = score + 1;
+      setScore(newScore);
+      scoreRef.current = newScore;
+      console.log('Score updated to:', newScore);
     }
     
     setTimeout(() => {
@@ -564,7 +570,8 @@ function QuizGenerator({ onBack }) {
         setSelectedAnswer(null);
       } else {
         setShowResult(true);
-        saveQuizResultToDB(isCorrect ? score + 1 : score);
+        console.log('Final score being saved:', scoreRef.current);
+        saveQuizResultToDB(scoreRef.current);
       }
     }, 1500);
   };
