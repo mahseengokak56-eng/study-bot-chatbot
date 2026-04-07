@@ -6,15 +6,14 @@ import toast from 'react-hot-toast';
 import { loginUser } from '../utils/api';
 import MagicalCursor from './MagicalCursor';
 
-// Full Page Moving Water Ripples
-const FullPageWaterRipples = () => {
+// Soothing Water Ripples - slower, more subtle, calming effect
+const SoothingWaterRipples = () => {
+  // Fewer sources, slower animation for calming effect
   const rippleSources = [
-    { id: 1, startX: '10%', startY: '20%', delay: 0 },
-    { id: 2, startX: '90%', startY: '30%', delay: 2 },
-    { id: 3, startX: '20%', startY: '70%', delay: 4 },
-    { id: 4, startX: '80%', startY: '80%', delay: 6 },
-    { id: 5, startX: '50%', startY: '50%', delay: 8 },
-    { id: 6, startX: '15%', startY: '85%', delay: 10 },
+    { id: 1, startX: '20%', startY: '30%', delay: 0 },
+    { id: 2, startX: '80%', startY: '20%', delay: 3 },
+    { id: 3, startX: '70%', startY: '70%', delay: 6 },
+    { id: 4, startX: '30%', startY: '80%', delay: 9 },
   ];
 
   return (
@@ -25,20 +24,20 @@ const FullPageWaterRipples = () => {
           className="absolute"
           style={{ left: source.startX, top: source.startY }}
         >
-          {[0, 1, 2, 3, 4].map((index) => (
+          {[0, 1, 2].map((index) => (
             <motion.div
               key={index}
-              className="absolute rounded-full border-2 border-blue-400/20"
+              className="absolute rounded-full border border-blue-300/10"
               style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
-              initial={{ width: 0, height: 0, opacity: 0.6 }}
+              initial={{ width: 0, height: 0, opacity: 0.3 }}
               animate={{
-                width: [0, 100, 200, 300, 400],
-                height: [0, 100, 200, 300, 400],
-                opacity: [0.6, 0.4, 0.2, 0.1, 0],
+                width: [0, 60, 120, 180],
+                height: [0, 60, 120, 180],
+                opacity: [0.3, 0.15, 0.08, 0],
               }}
               transition={{
-                duration: 4,
-                delay: source.delay + index * 0.8,
+                duration: 6,
+                delay: source.delay + index * 1.5,
                 repeat: Infinity,
                 ease: "easeOut",
               }}
@@ -74,8 +73,8 @@ function Login() {
     <div className="min-h-screen flex items-center justify-center bg-gemini-bg p-4 overflow-y-auto touch-auto relative cursor-none" style={{ touchAction: 'pan-y' }}>
       <MagicalCursor />
       
-      {/* Full Page Water Ripples */}
-      <FullPageWaterRipples />
+      {/* Soothing Water Ripples */}
+      <SoothingWaterRipples />
       
       {/* Background Animations */}
       <motion.div

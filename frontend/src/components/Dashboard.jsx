@@ -477,16 +477,26 @@ function QuizGenerator({ onBack }) {
 
   const handleFileUpload = async (e) => {
     const files = Array.from(e.target.files);
-    if (files.length === 0) return;
+    console.log('File upload triggered, files:', files.length);
+    if (files.length === 0) {
+      console.log('No files selected');
+      return;
+    }
+
+    // Mobile-friendly: Reset input value to allow re-uploading same file
+    e.target.value = '';
 
     setUploading(true);
     try {
+      console.log('Uploading files:', files.map(f => f.name));
       const response = await uploadFiles(files);
+      console.log('Upload response:', response);
       setFileIds(response.file_ids);
       setUploadedFiles(response.files);
       toast.success(`${files.length} file(s) uploaded successfully!`);
     } catch (error) {
-      toast.error('Failed to upload files');
+      console.error('File upload error:', error);
+      toast.error(error.message || 'Failed to upload files');
     }
     setUploading(false);
   };
@@ -681,22 +691,20 @@ function QuizGenerator({ onBack }) {
             {/* File Upload - Mobile Friendly */}
             <div>
               <label className="block text-sm text-gray-400 mb-2">Upload Files (Images, Documents, Text files)</label>
-              <div className="relative">
+              <div className="relative border-2 border-dashed border-white/20 rounded-xl p-6 text-center hover:border-white/40 transition-colors">
                 <input
                   type="file"
                   multiple
                   onChange={handleFileUpload}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  style={{ zIndex: 10 }}
                   id="quiz-file-upload"
                   accept=".txt,.md,.pdf,.png,.jpg,.jpeg,.gif,.webp,.doc,.docx"
-                  style={{ touchAction: 'manipulation' }}
+                  capture="environment"
                 />
-                <div
-                  className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-white/5 border border-white/10 border-dashed rounded-xl hover:bg-white/10 transition-colors"
-                >
-                  <Upload size={20} className="text-purple-400" />
-                  <span className="text-gray-400">Click to upload files or folders</span>
-                </div>
+                <Upload size={32} className="text-purple-400 mx-auto mb-2" />
+                <p className="text-gray-400 text-sm">Tap to upload files</p>
+                <p className="text-gray-500 text-xs mt-1">Images, PDFs, Documents, Text files</p>
               </div>
             </div>
 
@@ -1017,6 +1025,9 @@ function NotesGenerator({ onBack }) {
       console.log('No files selected');
       return;
     }
+
+    // Mobile-friendly: Reset input value to allow re-uploading same file
+    e.target.value = '';
 
     setUploading(true);
     try {

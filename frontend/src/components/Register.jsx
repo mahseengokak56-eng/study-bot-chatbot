@@ -6,16 +6,14 @@ import { registerUser } from '../utils/api';
 import MagicalCursor from './MagicalCursor';
 import { Sparkles, Droplets } from 'lucide-react';
 
-// Full Page Moving Water Ripples - like stones thrown in water across the entire page
-const FullPageWaterRipples = () => {
-  // Create multiple ripple sources that move around the page
+// Soothing Water Ripples - slower, more subtle, calming effect
+const SoothingWaterRipples = () => {
+  // Fewer sources, slower animation for calming effect
   const rippleSources = [
-    { id: 1, startX: '10%', startY: '20%', delay: 0 },
-    { id: 2, startX: '90%', startY: '30%', delay: 2 },
-    { id: 3, startX: '20%', startY: '70%', delay: 4 },
-    { id: 4, startX: '80%', startY: '80%', delay: 6 },
-    { id: 5, startX: '50%', startY: '50%', delay: 8 },
-    { id: 6, startX: '15%', startY: '85%', delay: 10 },
+    { id: 1, startX: '20%', startY: '30%', delay: 0 },
+    { id: 2, startX: '80%', startY: '20%', delay: 3 },
+    { id: 3, startX: '70%', startY: '70%', delay: 6 },
+    { id: 4, startX: '30%', startY: '80%', delay: 9 },
   ];
 
   return (
@@ -29,25 +27,25 @@ const FullPageWaterRipples = () => {
             top: source.startY,
           }}
         >
-          {/* Multiple expanding circles for each source */}
-          {[0, 1, 2, 3, 4].map((index) => (
+          {/* Slower, more transparent ripples */}
+          {[0, 1, 2].map((index) => (
             <motion.div
               key={index}
-              className="absolute rounded-full border-2 border-blue-400/20"
+              className="absolute rounded-full border border-blue-300/10"
               style={{
                 left: '50%',
                 top: '50%',
                 transform: 'translate(-50%, -50%)',
               }}
-              initial={{ width: 0, height: 0, opacity: 0.6 }}
+              initial={{ width: 0, height: 0, opacity: 0.3 }}
               animate={{
-                width: [0, 100, 200, 300, 400],
-                height: [0, 100, 200, 300, 400],
-                opacity: [0.6, 0.4, 0.2, 0.1, 0],
+                width: [0, 60, 120, 180],
+                height: [0, 60, 120, 180],
+                opacity: [0.3, 0.15, 0.08, 0],
               }}
               transition={{
-                duration: 4,
-                delay: source.delay + index * 0.8,
+                duration: 6,
+                delay: source.delay + index * 1.5,
                 repeat: Infinity,
                 ease: "easeOut",
               }}
@@ -102,8 +100,8 @@ function Register() {
         transition={{ duration: 11, repeat: Infinity, ease: "easeInOut", delay: 1 }}
       />
 
-      {/* Full Page Water Ripples */}
-      <FullPageWaterRipples />
+      {/* Soothing Water Ripples */}
+      <SoothingWaterRipples />
 
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
