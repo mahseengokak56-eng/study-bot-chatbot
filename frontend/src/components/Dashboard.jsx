@@ -488,6 +488,11 @@ function QuizGenerator({ onBack }) {
 
     setUploading(true);
     try {
+      // Wake up backend first (Render cold start fix)
+      toast.loading('Waking up server...', { id: 'wakeup' });
+      await checkBackendHealth();
+      toast.dismiss('wakeup');
+      
       console.log('Uploading files:', files.map(f => f.name));
       const response = await uploadFiles(files);
       console.log('Upload response:', response);
@@ -496,7 +501,12 @@ function QuizGenerator({ onBack }) {
       toast.success(`${files.length} file(s) uploaded successfully!`);
     } catch (error) {
       console.error('File upload error:', error);
-      toast.error(error.message || 'Failed to upload files');
+      toast.dismiss('wakeup');
+      if (error.code === 'ERR_NETWORK') {
+        toast.error('Server is waking up. Please try again in 30 seconds.');
+      } else {
+        toast.error(error.message || 'Failed to upload files');
+      }
     }
     setUploading(false);
   };
