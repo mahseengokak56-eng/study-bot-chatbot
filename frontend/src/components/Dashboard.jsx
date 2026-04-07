@@ -955,8 +955,8 @@ function QuizGenerator({ onBack }) {
               {quiz.questions[currentQuestion].options.map((option, i) => {
                 const isSelected = selectedAnswer === option;
                 const isCorrect = option === quiz.questions[currentQuestion].correct_answer;
-                const showCorrect = selectedAnswer && isCorrect;
-                const showWrong = selectedAnswer === option && !isCorrect;
+                const showCorrect = isSelected && isCorrect;
+                const showWrong = isSelected && !isCorrect;
                 
                 return (
                   <button
