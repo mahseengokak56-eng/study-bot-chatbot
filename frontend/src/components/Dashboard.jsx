@@ -940,9 +940,11 @@ function QuizGenerator({ onBack }) {
             <div className="space-y-3">
               {quiz.questions[currentQuestion].options.map((option, i) => {
                 const isSelected = selectedAnswer === option;
-                const isCorrect = option === quiz.questions[currentQuestion].correct_answer;
-                const showCorrect = isCorrect; // Always show correct answer
-                const showWrong = isSelected && !isCorrect; // Only show wrong if user selected it
+                const normalizedOption = option.trim().toLowerCase();
+                const normalizedCorrect = quiz.questions[currentQuestion].correct_answer.trim().toLowerCase();
+                const isCorrect = normalizedOption === normalizedCorrect;
+                const showCorrect = isCorrect;
+                const showWrong = isSelected && !isCorrect;
                 const wasSelected = isSelected;
                 
                 return (
