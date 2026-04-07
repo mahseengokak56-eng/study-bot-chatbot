@@ -551,16 +551,20 @@ function QuizGenerator({ onBack }) {
   };
 
   const handleAnswer = (option) => {
+    if (!option || !quiz?.questions?.[currentQuestion]) return;
     setSelectedAnswer(option);
-    const correctAnswer = quiz.questions[currentQuestion].correct_answer;
-    const normalizedOption = option.trim().toLowerCase();
-    const normalizedCorrect = correctAnswer.trim().toLowerCase();
+    const correctAnswer = quiz.questions[currentQuestion]?.correct_answer || '';
+    const normalizedOption = String(option).trim().toLowerCase();
+    const normalizedCorrect = String(correctAnswer).trim().toLowerCase();
     const isCorrect = normalizedOption === normalizedCorrect;
+    
+    console.log('Selected:', option, '| Correct:', correctAnswer, '| IsCorrect:', isCorrect);
     
     if (isCorrect) {
       const newScore = score + 1;
       setScore(newScore);
       scoreRef.current = newScore;
+      console.log('Score updated to:', newScore);
     }
     
     setTimeout(() => {
@@ -569,6 +573,7 @@ function QuizGenerator({ onBack }) {
         setSelectedAnswer(null);
       } else {
         setShowResult(true);
+        console.log('Final score being saved:', scoreRef.current);
         saveQuizResultToDB(scoreRef.current);
       }
     }, 1500);
@@ -965,10 +970,12 @@ function QuizGenerator({ onBack }) {
             <h3 className="text-lg font-semibold mb-6">{quiz.questions[currentQuestion].question}</h3>
             
             <div className="space-y-3">
-              {quiz.questions[currentQuestion].options.map((option, i) => {
+              {quiz.questions[currentQuestion]?.options?.map((option, i) => {
+                if (!option) return null;
                 const isSelected = selectedAnswer === option;
-                const normalizedOption = option.trim().toLowerCase();
-                const normalizedCorrect = quiz.questions[currentQuestion].correct_answer.trim().toLowerCase();
+                const correctAnswer = quiz.questions[currentQuestion]?.correct_answer || '';
+                const normalizedOption = String(option).trim().toLowerCase();
+                const normalizedCorrect = String(correctAnswer).trim().toLowerCase();
                 const isCorrect = normalizedOption === normalizedCorrect;
                 const showCorrect = isCorrect;
                 const showWrong = isSelected && !isCorrect;
