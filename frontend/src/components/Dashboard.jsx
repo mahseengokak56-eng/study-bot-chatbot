@@ -550,6 +550,9 @@ function QuizGenerator({ onBack }) {
     setLoading(false);
   };
 
+  const saveQuizResultToDB = async (finalScore) => {
+    try {
+      await saveQuizResult({
         topic: quiz.topic,
         difficulty: difficulty,
         score: finalScore,
