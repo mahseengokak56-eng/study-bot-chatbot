@@ -79,7 +79,7 @@ function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gemini-bg p-4 overflow-y-auto touch-auto relative cursor-none" style={{ touchAction: 'pan-y' }}>
+    <div className="min-h-screen flex items-start md:items-center justify-center bg-gemini-bg p-4 pt-20 md:pt-4 overflow-y-auto touch-auto relative cursor-none" style={{ touchAction: 'pan-y' }}>
       <MagicalCursor />
       
       {/* Subtle Background Animation */}
