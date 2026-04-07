@@ -550,6 +550,30 @@ function QuizGenerator({ onBack }) {
     setLoading(false);
   };
 
+  const handleAnswer = (option) => {
+    setSelectedAnswer(option);
+    const correctAnswer = quiz.questions[currentQuestion].correct_answer;
+    const normalizedOption = option.trim().toLowerCase();
+    const normalizedCorrect = correctAnswer.trim().toLowerCase();
+    const isCorrect = normalizedOption === normalizedCorrect;
+    
+    if (isCorrect) {
+      const newScore = score + 1;
+      setScore(newScore);
+      scoreRef.current = newScore;
+    }
+    
+    setTimeout(() => {
+      if (currentQuestion < quiz.questions.length - 1) {
+        setCurrentQuestion(prev => prev + 1);
+        setSelectedAnswer(null);
+      } else {
+        setShowResult(true);
+        saveQuizResultToDB(scoreRef.current);
+      }
+    }, 1500);
+  };
+
   const saveQuizResultToDB = async (finalScore) => {
     try {
       await saveQuizResult({
