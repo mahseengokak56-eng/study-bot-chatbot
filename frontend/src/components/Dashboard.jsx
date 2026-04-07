@@ -554,38 +554,29 @@ function QuizGenerator({ onBack }) {
     const correctAnswer = quiz.questions[currentQuestion].correct_answer;
     const isCorrect = option === correctAnswer;
     
-    // DEBUG
-    console.log('Selected:', option);
-    console.log('Correct:', correctAnswer);
-    console.log('Is Correct:', isCorrect);
-    
     if (isCorrect) {
       setScore(prevScore => prevScore + 1);
     }
     
     setTimeout(() => {
       if (currentQuestion < quiz.questions.length - 1) {
-        setCurrentQuestion(currentQuestion + 1);
+        setCurrentQuestion(prev => prev + 1);
         setSelectedAnswer(null);
       } else {
         setShowResult(true);
-        // Save quiz result
-        saveQuizResultToDB();
+        saveQuizResultToDB(isCorrect ? score + 1 : score);
       }
     }, 1500);
   };
 
-  const saveQuizResultToDB = async () => {
+  const saveQuizResultToDB = async (finalScore) => {
     try {
-      // Use the current score directly - no need to add anything
-      const finalScore = score;
       await saveQuizResult({
         topic: quiz.topic,
         difficulty: difficulty,
         score: finalScore,
         total_questions: quiz.total_questions
       });
-      // Refresh stats and history
       loadQuizStats();
       loadQuizHistory();
     } catch (error) {
@@ -972,8 +963,9 @@ function QuizGenerator({ onBack }) {
               {quiz.questions[currentQuestion].options.map((option, i) => {
                 const isSelected = selectedAnswer === option;
                 const isCorrect = option === quiz.questions[currentQuestion].correct_answer;
-                const showCorrect = isSelected && isCorrect;
-                const showWrong = isSelected && !isCorrect;
+                const showCorrect = isCorrect; // Always show correct answer
+                const showWrong = isSelected && !isCorrect; // Only show wrong if user selected it
+                const wasSelected = isSelected;
                 
                 return (
                   <button
@@ -983,7 +975,7 @@ function QuizGenerator({ onBack }) {
                     className={`w-full p-4 rounded-xl text-left transition-all ${
                       showCorrect ? 'bg-green-500/20 border border-green-500' :
                       showWrong ? 'bg-red-500/20 border border-red-500' :
-                      isSelected ? 'bg-purple-500/20 border border-purple-500' :
+                      wasSelected ? 'bg-purple-500/20 border border-purple-500' :
                       'bg-white/5 border border-white/10 hover:bg-white/10'
                     }`}
                   >

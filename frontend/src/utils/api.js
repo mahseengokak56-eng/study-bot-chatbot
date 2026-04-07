@@ -132,7 +132,7 @@ export const fetchUserStats = async () => {
 // Check if backend is awake
 export const checkBackendHealth = async () => {
   try {
-    const response = await api.get('/health', { timeout: 30000 });
+    const response = await api.get('/health', { timeout: 60000 }); // 60 seconds for cold start
     return response.data.status === 'healthy';
   } catch (error) {
     console.log('Backend health check failed:', error);
@@ -148,7 +148,8 @@ export const uploadFiles = async (files) => {
   const response = await api.post('/api/upload', formData, {
     headers: {
       'Content-Type': 'multipart/form-data'
-    }
+    },
+    timeout: 60000 // 60 seconds timeout for file upload
   });
   return response.data;
 };
