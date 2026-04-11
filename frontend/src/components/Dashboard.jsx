@@ -553,7 +553,9 @@ function QuizGenerator({ onBack }) {
   const handleAnswer = (option) => {
     if (!option || !quiz?.questions?.[currentQuestion]) return;
     setSelectedAnswer(option);
-    const correctAnswer = quiz.questions[currentQuestion]?.correct_answer || '';
+    // Handle both correct_answer (snake_case) and correctAnswer (camelCase)
+    const question = quiz.questions[currentQuestion];
+    const correctAnswer = question?.correct_answer || question?.correctAnswer || '';
     const normalizedOption = String(option).trim().toLowerCase();
     const normalizedCorrect = String(correctAnswer).trim().toLowerCase();
     const isCorrect = normalizedOption === normalizedCorrect;
@@ -973,7 +975,9 @@ function QuizGenerator({ onBack }) {
               {quiz.questions[currentQuestion]?.options?.map((option, i) => {
                 if (!option) return null;
                 const isSelected = selectedAnswer === option;
-                const correctAnswer = quiz.questions[currentQuestion]?.correct_answer || '';
+                // Handle both correct_answer (snake_case) and correctAnswer (camelCase)
+                const question = quiz.questions[currentQuestion];
+                const correctAnswer = question?.correct_answer || question?.correctAnswer || '';
                 const normalizedOption = String(option).trim().toLowerCase();
                 const normalizedCorrect = String(correctAnswer).trim().toLowerCase();
                 const isCorrect = normalizedOption === normalizedCorrect;
