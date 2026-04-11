@@ -977,9 +977,9 @@ function QuizGenerator({ onBack }) {
                 const normalizedOption = String(option).trim().toLowerCase();
                 const normalizedCorrect = String(correctAnswer).trim().toLowerCase();
                 const isCorrect = normalizedOption === normalizedCorrect;
-                const showCorrect = isCorrect;
-                const showWrong = isSelected && !isCorrect;
-                const wasSelected = isSelected;
+                // Only show colors after an answer is selected
+                const showCorrect = selectedAnswer && isCorrect;
+                const showWrong = selectedAnswer && isSelected && !isCorrect;
                 
                 return (
                   <button
@@ -989,7 +989,6 @@ function QuizGenerator({ onBack }) {
                     className={`w-full p-4 rounded-xl text-left transition-all ${
                       showCorrect ? 'bg-green-500/20 border border-green-500' :
                       showWrong ? 'bg-red-500/20 border border-red-500' :
-                      wasSelected ? 'bg-purple-500/20 border border-purple-500' :
                       'bg-white/5 border border-white/10 hover:bg-white/10'
                     }`}
                   >
