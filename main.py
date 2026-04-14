@@ -538,13 +538,20 @@ Make questions educational and clear."""
         if current_q.get('question'):
             questions.append(current_q)
         
-        # Format questions properly
+        # Format questions properly - convert letter answer to text
         formatted_questions = []
         for q in questions[:request.num_questions]:
+            options = q.get('options', ['A', 'B', 'C', 'D'])
+            correct = q.get('correct_answer', 'A').strip().upper()
+            # Convert letter (A/B/C/D) to option text
+            letter_to_idx = {'A': 0, 'B': 1, 'C': 2, 'D': 3}
+            correct_idx = letter_to_idx.get(correct, 0)
+            correct_text = options[correct_idx] if correct_idx < len(options) else options[0]
+            
             formatted_questions.append(QuizQuestion(
                 question=q.get('question', 'Sample question'),
-                options=q.get('options', ['A', 'B', 'C', 'D']),
-                correct_answer=q.get('correct_answer', 'A'),
+                options=options,
+                correct_answer=correct_text,
                 explanation=q.get('explanation', 'No explanation available.')
             ))
         
@@ -1002,13 +1009,20 @@ Make questions based specifically on the provided content."""
         if current_q.get('question'):
             questions.append(current_q)
         
-        # Format properly
+        # Format properly - convert letter answer to text
         formatted_questions = []
         for q in questions[:request.num_questions]:
+            options = q.get('options', ['A', 'B', 'C', 'D'])
+            correct = q.get('correct_answer', 'A').strip().upper()
+            # Convert letter (A/B/C/D) to option text
+            letter_to_idx = {'A': 0, 'B': 1, 'C': 2, 'D': 3}
+            correct_idx = letter_to_idx.get(correct, 0)
+            correct_text = options[correct_idx] if correct_idx < len(options) else options[0]
+            
             formatted_questions.append(QuizQuestion(
                 question=q.get('question', 'Sample question'),
-                options=q.get('options', ['A', 'B', 'C', 'D']),
-                correct_answer=q.get('correct_answer', 'A'),
+                options=options,
+                correct_answer=correct_text,
                 explanation=q.get('explanation', 'No explanation available.')
             ))
         
