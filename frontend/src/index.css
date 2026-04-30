@@ -30,7 +30,15 @@ html.light {
 
 @layer base {
   body {
-    @apply bg-gemini-bg text-gemini-text font-sans antialiased m-0 p-0 overflow-hidden;
+    @apply bg-gemini-bg text-gemini-text font-sans antialiased m-0 p-0;
+    background-color: #131314; /* Fallback */
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  
+  #root {
+    min-height: 100vh;
+    background-color: #131314; /* Fallback */
   }
 }
 
