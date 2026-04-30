@@ -193,6 +193,12 @@ export const generateNotesFromFiles = async (fileIds, detailLevel = 'medium') =>
   return response.data;
 };
 
+// ── Recommendation System API ───────────────────────────────────────────────
+export const getRecommendations = async () => {
+  const response = await api.get('/api/recommendations');
+  return response.data;
+};
+
 // Legacy functions
 export const fetchSessionHistory = async (sessionId) => {
   return fetchChatHistory();

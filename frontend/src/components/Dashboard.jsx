@@ -14,7 +14,8 @@ import {
   Award, BarChart3, X
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { logoutUser, getCurrentUser, api, uploadFiles, checkBackendHealth, saveQuizResult, getQuizStats, getQuizHistory, getNotesHistory, generateQuizFromFiles, generateNotesFromFiles } from '../utils/api';
+import { logoutUser, getCurrentUser, api, uploadFiles, checkBackendHealth, saveQuizResult, getQuizStats, getQuizHistory, getNotesHistory, generateQuizFromFiles, generateNotesFromFiles, getRecommendations } from '../utils/api';
+import AssistantBot from './AssistantBot';
 import toast from 'react-hot-toast';
 
 // Dashboard Stats Component
@@ -484,6 +485,24 @@ function QuizGenerator({ onBack }) {
       return;
     }
 
+    // Validate file types and sizes
+    const allowedTypes = ['.txt', '.md', '.pdf', '.png', '.jpg', '.jpeg', '.gif', '.webp', '.doc', '.docx'];
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    
+    for (const file of files) {
+      const ext = '.' + file.name.split('.').pop().toLowerCase();
+      if (!allowedTypes.includes(ext)) {
+        toast.error(`Invalid file type: ${file.name}. Only PDF, TXT, images, and documents are allowed.`);
+        e.target.value = '';
+        return;
+      }
+      if (file.size > maxSize) {
+        toast.error(`File too large: ${file.name}. Maximum size is 10MB.`);
+        e.target.value = '';
+        return;
+      }
+    }
+
     // Mobile-friendly: Reset input value to allow re-uploading same file
     e.target.value = '';
 
@@ -497,19 +516,27 @@ function QuizGenerator({ onBack }) {
       console.log('Uploading files:', files.map(f => f.name));
       const response = await uploadFiles(files);
       console.log('Upload response:', response);
+      
+      if (!response || !response.file_ids || !Array.isArray(response.file_ids)) {
+        throw new Error('Invalid response from server');
+      }
+      
       setFileIds(response.file_ids);
-      setUploadedFiles(response.files);
+      setUploadedFiles(response.files || []);
       toast.success(`${files.length} file(s) uploaded successfully!`);
     } catch (error) {
       console.error('File upload error:', error);
       toast.dismiss('wakeup');
       if (error.code === 'ERR_NETWORK') {
         toast.error('Server is waking up. Please try again in 30 seconds.');
+      } else if (error.response?.status === 413) {
+        toast.error('Files too large. Please upload smaller files.');
       } else {
-        toast.error(error.message || 'Failed to upload files');
+        toast.error(error.message || 'Something went wrong, please try again.');
       }
+    } finally {
+      setUploading(false);
     }
-    setUploading(false);
   };
 
   const handleGenerate = async () => {
@@ -536,18 +563,75 @@ function QuizGenerator({ onBack }) {
       toast.error('Please upload files first');
       return;
     }
+    
+    // Completely reset quiz state before generating
+    setQuiz(null);
+    setCurrentQuestion(0);
+    setScore(0);
+    setShowResult(false);
+    setSelectedAnswer(null);
+    
     setLoading(true);
+    
     try {
+      console.log('Generating quiz from files:', fileIds);
       const data = await generateQuizFromFiles(fileIds, difficulty, numQuestions);
-      setQuiz(data);
+      console.log('Quiz data received:', data);
+      
+      // Validate quiz data structure thoroughly
+      if (!data || typeof data !== 'object') {
+        throw new Error('Invalid quiz data: response is not an object');
+      }
+      
+      if (!data.questions || !Array.isArray(data.questions)) {
+        console.error('Invalid questions data:', data.questions);
+        throw new Error('Invalid quiz data: questions is not an array');
+      }
+      
+      if (data.questions.length === 0) {
+        throw new Error('Invalid quiz data: no questions found');
+      }
+      
+      // Validate each question has required fields
+      const validQuestions = data.questions.filter(q => {
+        const isValid = q && 
+          typeof q.question === 'string' && 
+          Array.isArray(q.options) && 
+          q.options.length >= 2 &&
+          (q.correct_answer || q.correctAnswer);
+        if (!isValid) {
+          console.warn('Invalid question filtered out:', q);
+        }
+        return isValid;
+      });
+      
+      if (validQuestions.length === 0) {
+        throw new Error('Invalid quiz data: all questions are malformed');
+      }
+      
+      // Use only valid questions
+      const sanitizedData = {
+        topic: data.topic || 'Quiz from Files',
+        questions: validQuestions,
+        total_questions: validQuestions.length
+      };
+      
+      console.log('Setting quiz with', validQuestions.length, 'questions');
+      setQuiz(sanitizedData);
+      toast.success(`Quiz generated with ${validQuestions.length} questions!`);
+      
+    } catch (error) {
+      console.error('Quiz generation error:', error);
+      toast.error('Failed to generate quiz: ' + (error.message || 'Something went wrong, please try again.'));
+      // Ensure quiz state is completely reset on error
+      setQuiz(null);
       setCurrentQuestion(0);
       setScore(0);
       setShowResult(false);
-      toast.success('Quiz generated from your files!');
-    } catch (error) {
-      toast.error('Failed to generate quiz from files');
+      setSelectedAnswer(null);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleAnswer = (option) => {
@@ -660,15 +744,25 @@ function QuizGenerator({ onBack }) {
 
             <div>
               <label className="block text-sm text-gray-400 mb-2">Difficulty</label>
-              <select
-                value={difficulty}
-                onChange={(e) => setDifficulty(e.target.value)}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-purple-500"
-              >
-                <option value="easy">Easy</option>
-                <option value="medium">Medium</option>
-                <option value="hard">Hard</option>
-              </select>
+              <div className="flex gap-2">
+                {['easy', 'medium', 'hard'].map((level) => (
+                  <button
+                    key={level}
+                    onClick={() => setDifficulty(level)}
+                    className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${
+                      difficulty === level
+                        ? level === 'easy'
+                          ? 'bg-green-500 text-white shadow-lg shadow-green-500/30'
+                          : level === 'medium'
+                          ? 'bg-yellow-500 text-black shadow-lg shadow-yellow-500/30'
+                          : 'bg-red-500 text-white shadow-lg shadow-red-500/30'
+                        : 'bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white'
+                    }`}
+                  >
+                    {level.charAt(0).toUpperCase() + level.slice(1)}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div>
@@ -749,15 +843,25 @@ function QuizGenerator({ onBack }) {
 
             <div>
               <label className="block text-sm text-gray-400 mb-2">Difficulty</label>
-              <select
-                value={difficulty}
-                onChange={(e) => setDifficulty(e.target.value)}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-purple-500"
-              >
-                <option value="easy">Easy</option>
-                <option value="medium">Medium</option>
-                <option value="hard">Hard</option>
-              </select>
+              <div className="flex gap-2">
+                {['easy', 'medium', 'hard'].map((level) => (
+                  <button
+                    key={level}
+                    onClick={() => setDifficulty(level)}
+                    className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all ${
+                      difficulty === level
+                        ? level === 'easy'
+                          ? 'bg-green-500 text-white shadow-lg shadow-green-500/30'
+                          : level === 'medium'
+                          ? 'bg-yellow-500 text-black shadow-lg shadow-yellow-500/30'
+                          : 'bg-red-500 text-white shadow-lg shadow-red-500/30'
+                        : 'bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white'
+                    }`}
+                  >
+                    {level.charAt(0).toUpperCase() + level.slice(1)}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div>
@@ -951,13 +1055,42 @@ function QuizGenerator({ onBack }) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
         >
+          {/* Debug Info - Remove in production */}
+          {(!quiz.questions || !Array.isArray(quiz.questions) || quiz.questions.length === 0) && (
+            <div className="bg-red-500/20 border border-red-500 rounded-xl p-4 mb-4">
+              <p className="text-red-400 font-semibold">Quiz Data Error</p>
+              <p className="text-sm text-red-300">Questions: {JSON.stringify(quiz.questions?.length)}</p>
+              <p className="text-sm text-red-300">Quiz: {JSON.stringify(Object.keys(quiz))}</p>
+              <button 
+                onClick={() => { setQuiz(null); setActiveTab('files'); }}
+                className="mt-2 px-4 py-2 bg-red-500 rounded-lg text-white text-sm"
+              >
+                Reset Quiz
+              </button>
+            </div>
+          )}
+          
+          {(!quiz.questions || !quiz.questions[currentQuestion]) ? (
+            <div className="bg-yellow-500/20 border border-yellow-500 rounded-xl p-6 text-center">
+              <AlertCircle size={48} className="mx-auto mb-4 text-yellow-400" />
+              <p className="text-yellow-400 font-semibold mb-2">Unable to load question</p>
+              <p className="text-sm text-yellow-300 mb-4">The quiz data appears to be incomplete.</p>
+              <button 
+                onClick={() => { setQuiz(null); setActiveTab('files'); setFileIds([]); setUploadedFiles([]); }}
+                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl text-white font-semibold"
+              >
+                Try Again
+              </button>
+            </div>
+          ) : (
+            <>
           <div className="mb-4 flex items-center justify-between">
-            <span className="text-sm text-gray-400">Question {currentQuestion + 1} of {quiz.total_questions}</span>
+            <span className="text-sm text-gray-400">Question {currentQuestion + 1} of {quiz.total_questions || quiz.questions.length}</span>
             <div className="flex-1 mx-4 bg-white/10 rounded-full h-2">
               <motion.div 
                 className="bg-purple-500 h-full rounded-full"
                 initial={{ width: 0 }}
-                animate={{ width: `${((currentQuestion + 1) / quiz.total_questions) * 100}%` }}
+                animate={{ width: `${((currentQuestion + 1) / (quiz.total_questions || quiz.questions.length)) * 100}%` }}
               />
             </div>
             <span className="text-sm text-gray-400">Score: {score}</span>
@@ -969,7 +1102,7 @@ function QuizGenerator({ onBack }) {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
           >
-            <h3 className="text-lg font-semibold mb-6">{quiz.questions[currentQuestion].question}</h3>
+            <h3 className="text-lg font-semibold mb-6">{quiz.questions[currentQuestion]?.question || 'Question'}</h3>
             
             <div className="space-y-3">
               {quiz.questions[currentQuestion]?.options?.map((option, i) => {
@@ -1012,10 +1145,12 @@ function QuizGenerator({ onBack }) {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
               >
-                <p className="text-sm">{quiz.questions[currentQuestion].explanation}</p>
+                <p className="text-sm">{quiz.questions[currentQuestion]?.explanation || 'No explanation available.'}</p>
               </motion.div>
             )}
           </motion.div>
+            </>
+          )}
         </motion.div>
       )}
     </div>
@@ -1435,10 +1570,27 @@ function Dashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeView, setActiveView] = useState('chat');
   const [dashboardStats, setDashboardStats] = useState({});
+  const [recommendations, setRecommendations] = useState(null);
+  const [isAssistantExpanded, setIsAssistantExpanded] = useState(false);
+  const [recentTopics, setRecentTopics] = useState([]);
+  const [chatCount, setChatCount] = useState(0);
   const navigate = useNavigate();
   const currentUser = getCurrentUser();
 
   const closeSidebar = () => setIsSidebarOpen(false);
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+  const userDropdownRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target)) {
+        setIsUserDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleLogout = () => {
     logoutUser();
@@ -1455,6 +1607,29 @@ function Dashboard() {
       });
     }
   }, [activeView]);
+
+  // Fetch recommendations and topics
+  useEffect(() => {
+    const fetchRecommendations = async () => {
+      try {
+        const data = await getRecommendations();
+        setRecommendations(data);
+        setRecentTopics(data.extracted_topics || []);
+      } catch (error) {
+        console.error('Failed to fetch recommendations:', error);
+      }
+    };
+    
+    fetchRecommendations();
+    // Refresh every 5 minutes
+    const interval = setInterval(fetchRecommendations, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Track chat count for assistant
+  useEffect(() => {
+    setChatCount(messages.length);
+  }, [messages]);
 
   const menuItems = [
     { id: 'chat', label: 'Chat', icon: MessageSquare },
@@ -1507,15 +1682,58 @@ function Dashboard() {
 
           <div className="flex items-center gap-4 px-4">
             <ThemeToggle />
-            <button className="flex items-center gap-2 text-sm text-gemini-muted hover:text-gemini-text transition-colors">
-              <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400">
-                <User size={18} />
-              </div>
-              <span className="hidden sm:inline-block">{currentUser?.name || 'User'}</span>
-            </button>
-            <button onClick={handleLogout} className="flex items-center gap-2 p-2 hover:bg-gemini-hover rounded-lg transition-colors text-red-400 hover:text-red-300">
-              <LogOut size={20} />
-            </button>
+            
+            {/* User Profile Dropdown */}
+            <div className="relative" ref={userDropdownRef}>
+              <button 
+                onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+                className="flex items-center gap-2 text-sm text-gemini-muted hover:text-gemini-text transition-all hover:scale-105"
+              >
+                <div className="relative">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white shadow-lg hover:shadow-xl transition-all">
+                    <User size={18} />
+                  </div>
+                  {/* Active status indicator */}
+                  <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-gemini-bg"></div>
+                </div>
+                <span className="hidden sm:inline-block font-medium">{currentUser?.name || 'User'}</span>
+              </button>
+              
+              {/* Dropdown Menu */}
+              {isUserDropdownOpen && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="absolute right-0 mt-2 w-48 bg-gemini-message-bot border border-gemini-border rounded-xl shadow-xl py-2 z-50"
+                >
+                  <div className="px-4 py-2 border-b border-gemini-border">
+                    <p className="text-sm font-medium text-gemini-text">{currentUser?.name || 'User'}</p>
+                    <p className="text-xs text-gemini-muted">{currentUser?.email || ''}</p>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      setIsUserDropdownOpen(false);
+                      toast.info('Profile settings coming soon!');
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm text-gemini-text hover:bg-gemini-hover transition-colors flex items-center gap-2"
+                  >
+                    <User size={16} />
+                    Profile
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setIsUserDropdownOpen(false);
+                      handleLogout();
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-red-500/10 transition-colors flex items-center gap-2"
+                  >
+                    <LogOut size={16} />
+                    Logout
+                  </button>
+                </motion.div>
+              )}
+            </div>
           </div>
         </header>
 
@@ -1600,6 +1818,17 @@ function Dashboard() {
           </AnimatePresence>
         </div>
       </main>
+
+      {/* Smart AI Assistant */}
+      <AssistantBot 
+        currentView={activeView}
+        quizScore={recommendations?.based_on?.quiz_performance}
+        stressLevel={recommendations?.based_on?.stress_level}
+        recentTopics={recentTopics}
+        chatCount={chatCount}
+        isExpanded={isAssistantExpanded}
+        setIsExpanded={setIsAssistantExpanded}
+      />
     </div>
   );
 }

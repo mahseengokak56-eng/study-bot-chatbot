@@ -499,6 +499,8 @@ async def generate_quiz(
     try:
         system_msg = f"""You are a quiz generator. Create {request.num_questions} multiple choice questions about "{request.topic}" at {request.difficulty} difficulty.
 
+IMPORTANT: Vary the correct answers among A, B, C, and D. Do NOT always make A the correct answer. Use each letter roughly equally across all questions.
+
 Format each question as:
 Q: [Question text]
 A) [Option]
@@ -967,6 +969,8 @@ async def generate_quiz_from_files(
         # Generate quiz using LLM based on file content
         system_msg = f"""Based on the following content, create {request.num_questions} multiple choice questions at {request.difficulty} difficulty level.
 
+IMPORTANT: Vary the correct answers among A, B, C, and D. Do NOT always make A the correct answer.
+
 CONTENT:
 {combined_content[:3000]}
 
@@ -1229,6 +1233,172 @@ async def startup_event():
     except Exception as e:
         print(f"⚠️ Performance model error: {e}")
 
+
+# ── NLP-based Topic Extraction & Recommendation System ────────────────────
+import re
+from collections import Counter
+
+# Common stopwords to filter out
+STOPWORDS = {
+    'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+    'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
+    'should', 'may', 'might', 'must', 'shall', 'can', 'need', 'dare',
+    'ought', 'used', 'to', 'of', 'in', 'for', 'on', 'with', 'at', 'by',
+    'from', 'as', 'into', 'through', 'during', 'before', 'after', 'above',
+    'below', 'between', 'under', 'and', 'but', 'or', 'yet', 'so', 'if',
+    'because', 'although', 'though', 'while', 'where', 'when', 'that',
+    'which', 'who', 'whom', 'whose', 'what', 'this', 'these', 'those',
+    'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her',
+    'us', 'them', 'my', 'your', 'his', 'her', 'its', 'our', 'their',
+    'myself', 'yourself', 'himself', 'herself', 'itself', 'ourselves',
+    'themselves', 'what', 'which', 'who', 'whom', 'this', 'that', 'these',
+    'those', 'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+    'have', 'has', 'had', 'having', 'do', 'does', 'did', 'doing', 'explain',
+    'tell', 'describe', 'what', 'how', 'why', 'when', 'where', 'who'
+}
+
+def extract_topics(text: str, max_topics: int = 3) -> List[str]:
+    """Extract main topics from text using simple NLP (keyword extraction)."""
+    if not text:
+        return []
+    
+    # Clean and tokenize
+    text = re.sub(r'[^\w\s]', ' ', text.lower())
+    words = text.split()
+    
+    # Filter stopwords and short words
+    filtered = [w for w in words if w not in STOPWORDS and len(w) > 2]
+    
+    # Count word frequency
+    word_counts = Counter(filtered)
+    
+    # Get top topics
+    top_words = word_counts.most_common(max_topics)
+    
+    # Capitalize and return
+    topics = [word.title() for word, count in top_words]
+    return topics
+
+class RecommendationResponse(BaseModel):
+    recommendations: List[str]
+    extracted_topics: List[str]
+    based_on: dict
+
+@app.get("/api/recommendations", response_model=RecommendationResponse)
+async def get_recommendations(current_user: TokenData = Depends(get_current_user)):
+    """Generate personalized study recommendations based on user activity."""
+    try:
+        recommendations = []
+        extracted_topics = []
+        based_on = {
+            "recent_chats": 0,
+            "quiz_performance": None,
+            "stress_level": None,
+            "weak_topics": [],
+            "strong_topics": []
+        }
+        
+        # 1. Analyze recent chat history
+        try:
+            chat_history = list(chat_history_collection.find(
+                {"user_id": current_user.user_id}
+            ).sort("timestamp", -1).limit(10))
+            
+            based_on["recent_chats"] = len(chat_history)
+            
+            # Extract topics from chat messages
+            for chat in chat_history:
+                message = chat.get("message", "")
+                topics = extract_topics(message, max_topics=2)
+                extracted_topics.extend(topics)
+                
+        except Exception as e:
+            print(f"Chat analysis error: {e}")
+        
+        # 2. Analyze quiz performance
+        try:
+            quiz_results = list(quiz_results_collection.find(
+                {"user_id": current_user.user_id}
+            ).sort("timestamp", -1).limit(5))
+            
+            if quiz_results:
+                scores = [r.get("score", 0) / r.get("total_questions", 1) * 100 for r in quiz_results]
+                avg_score = sum(scores) / len(scores)
+                based_on["quiz_performance"] = round(avg_score, 1)
+                
+                # Identify weak and strong topics
+                for result in quiz_results:
+                    topic = result.get("topic", "")
+                    score_pct = result.get("score", 0) / result.get("total_questions", 1) * 100
+                    
+                    if score_pct < 50:
+                        based_on["weak_topics"].append(topic)
+                        recommendations.append(f'📚 Revise "{topic}" - Your score was {score_pct:.0f}%')
+                    elif score_pct > 80:
+                        based_on["strong_topics"].append(topic)
+                        recommendations.append(f'🌟 Great job on "{topic}"! Try a harder difficulty!')
+                        
+        except Exception as e:
+            print(f"Quiz analysis error: {e}")
+        
+        # 3. Check stress level
+        try:
+            stress_data = stress_collection.find_one(
+                {"user_id": current_user.user_id},
+                sort=[("timestamp", -1)]
+            )
+            
+            if stress_data:
+                stress_level = stress_data.get("stress_level", "Medium")
+                based_on["stress_level"] = stress_level
+                
+                if stress_level == "High":
+                    recommendations.append("💆 Take a short break! Your stress level is high.")
+                    recommendations.append("🧘 Try deep breathing exercises for 2 minutes.")
+                elif stress_level == "Low" and based_on.get("quiz_performance", 0) > 70:
+                    recommendations.append("🚀 You're in great shape! Ready to tackle new topics!")
+                    
+        except Exception as e:
+            print(f"Stress analysis error: {e}")
+        
+        # 4. Generate general recommendations based on topics
+        unique_topics = list(set(extracted_topics))[:5]
+        
+        if unique_topics:
+            based_on["extracted_topics"] = unique_topics
+            
+            if len(unique_topics) >= 2:
+                recommendations.append(f"🎯 Try connecting {' and '.join(unique_topics[:2])} concepts!")
+            
+            for topic in unique_topics[:2]:
+                if topic not in based_on.get("weak_topics", []) and topic not in based_on.get("strong_topics", []):
+                    recommendations.append(f"📖 Generate study notes for {topic}")
+                    recommendations.append(f"🎮 Take a quiz on {topic} to test your knowledge!")
+        
+        # 5. Default recommendations if none generated
+        if not recommendations:
+            recommendations = [
+                "💡 Start by asking a question about any topic you're studying!",
+                "🎯 Take a quiz to test your current knowledge level.",
+                "📝 Upload study materials to generate personalized notes."
+            ]
+        
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_recommendations = []
+        for rec in recommendations:
+            if rec not in seen:
+                seen.add(rec)
+                unique_recommendations.append(rec)
+        
+        return RecommendationResponse(
+            recommendations=unique_recommendations[:5],
+            extracted_topics=unique_topics,
+            based_on=based_on
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate recommendations: {str(e)}")
 
 # ── Run server ─────────────────────────────────────────────────────────────
 if __name__ == "__main__":
