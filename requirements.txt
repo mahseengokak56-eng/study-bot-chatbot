@@ -7,6 +7,9 @@ bcrypt
 pyjwt
 scikit-learn
 python-multipart
+# PDF extraction libraries
+pdfplumber
+PyPDF2
 # Optional: for LLM enhancement
 langchain
 langchain-groq

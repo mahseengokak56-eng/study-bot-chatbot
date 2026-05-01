@@ -1240,6 +1240,23 @@ function NotesGenerator({ onBack }) {
     setFileIds(newIds);
   };
 
+  const handleGenerateFromFiles = async () => {
+    if (fileIds.length === 0) {
+      toast.error('Please upload files first');
+      return;
+    }
+    setLoading(true);
+    try {
+      const response = await generateNotesFromFiles(fileIds, detailLevel);
+      setNotes(response.data);
+      toast.success('Notes generated from files!');
+    } catch (error) {
+      console.error('Notes generation error:', error);
+      toast.error('Failed to generate notes from files');
+    }
+    setLoading(false);
+  };
+
   return (
     <div className="h-full overflow-y-auto p-6">
       <div className="flex items-center gap-3 mb-6">

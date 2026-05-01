@@ -747,9 +747,69 @@ import io
 # Try to import PDF and DOCX extractors
 try:
     import PyPDF2
-    PDF_SUPPORT = True
+    PYPDF2_SUPPORT = True
 except ImportError:
-    PDF_SUPPORT = False
+    PYPDF2_SUPPORT = False
+
+try:
+    import pdfplumber
+    PDFPLUMBER_SUPPORT = True
+except ImportError:
+    PDFPLUMBER_SUPPORT = False
+
+# Combined PDF support
+PDF_SUPPORT = PYPDF2_SUPPORT or PDFPLUMBER_SUPPORT
+
+def extract_pdf_text(content: bytes, filename: str) -> str:
+    """Extract text from PDF using multiple methods."""
+    text = ""
+    
+    # Method 1: Try pdfplumber (best for structured PDFs)
+    if PDFPLUMBER_SUPPORT:
+        try:
+            pdf_file = io.BytesIO(content)
+            with pdfplumber.open(pdf_file) as pdf:
+                for page in pdf.pages:
+                    page_text = page.extract_text()
+                    if page_text:
+                        text += page_text + "\n"
+            
+            # Validate extraction - if we got meaningful text, return it
+            if len(text.strip()) > 50:
+                print(f"pdfplumber successfully extracted {len(text)} chars from {filename}")
+                return text[:3000]
+        except Exception as e:
+            print(f"pdfplumber extraction failed: {e}")
+    
+    # Method 2: Try PyPDF2
+    if PYPDF2_SUPPORT:
+        try:
+            text = ""
+            pdf_file = io.BytesIO(content)
+            pdf_reader = PyPDF2.PdfReader(pdf_file)
+            
+            for page_num, page in enumerate(pdf_reader.pages):
+                try:
+                    page_text = page.extract_text()
+                    if page_text:
+                        text += page_text + "\n"
+                except Exception as e:
+                    print(f"Error extracting page {page_num}: {e}")
+                    continue
+            
+            # Validate extraction
+            if len(text.strip()) > 50:
+                print(f"PyPDF2 successfully extracted {len(text)} chars from {filename}")
+                return text[:3000]
+        except Exception as e:
+            print(f"PyPDF2 extraction failed: {e}")
+    
+    # If both methods failed or returned minimal text
+    if len(text.strip()) < 50:
+        print(f"Warning: PDF {filename} may be scanned or image-based. Minimal text extracted.")
+        return f"[PDF file: {filename} - Content appears to be scanned/images. Please upload text-based PDFs for best results.]"
+    
+    return text[:3000] if text else f"[PDF file: {filename}]"
 
 try:
     import docx
@@ -773,20 +833,12 @@ def extract_text_from_file(content: bytes, filename: str, content_type: str) -> 
     elif filename_lower.endswith(('.txt', '.md', '.py', '.js', '.html', '.css', '.json', '.xml')):
         text = content.decode('utf-8', errors='ignore')
     
-    # PDF files
-    elif filename_lower.endswith('.pdf') and PDF_SUPPORT:
-        try:
-            pdf_file = io.BytesIO(content)
-            pdf_reader = PyPDF2.PdfReader(pdf_file)
-            for page in pdf_reader.pages:
-                page_text = page.extract_text()
-                if page_text:
-                    text += page_text + "\n"
-        except Exception as e:
-            print(f"PDF extraction error: {e}")
-            text = f"[PDF file: {filename}]"
+    # PDF files - try multiple methods
+    elif filename_lower.endswith('.pdf'):
+        text = extract_pdf_text(content, filename)
+    
     elif filename_lower.endswith('.pdf') and not PDF_SUPPORT:
-        text = f"[PDF file: {filename} - install PyPDF2 for text extraction]"
+        text = f"[PDF file: {filename} - install PyPDF2 or pdfplumber for text extraction]"
     
     # Word documents
     elif filename_lower.endswith('.docx') and DOCX_SUPPORT:
