@@ -160,7 +160,7 @@ function StatsDashboard({ stats, onBack }) {
   );
 }
 
-// Stress Predictor Component
+// Stress Predictor Component - Enhanced UI
 function StressPredictor({ onBack }) {
   const [inputs, setInputs] = useState({ study_hours: 6, sleep_hours: 7, screen_time: 5 });
   const [result, setResult] = useState(null);
@@ -178,119 +178,212 @@ function StressPredictor({ onBack }) {
     setLoading(false);
   };
 
-  const levelColors = {
-    Low: 'text-green-400',
-    Medium: 'text-yellow-400',
-    High: 'text-red-400'
+  const levelConfig = {
+    Low: { color: 'from-green-500 to-emerald-600', bgColor: 'bg-green-500/20', textColor: 'text-green-400', icon: '😌', desc: 'You\'re managing well!' },
+    Medium: { color: 'from-yellow-500 to-orange-500', bgColor: 'bg-yellow-500/20', textColor: 'text-yellow-400', icon: '😐', desc: 'Some tension detected' },
+    High: { color: 'from-red-500 to-rose-600', bgColor: 'bg-red-500/20', textColor: 'text-red-400', icon: '😰', desc: 'Time to take a break!' }
   };
+
+  const currentLevel = result ? levelConfig[result.level] : null;
 
   return (
     <div className="h-full overflow-y-auto p-6">
-      <div className="flex items-center gap-3 mb-6">
-        <button onClick={onBack} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+      <div className="flex items-center gap-3 mb-8">
+        <button onClick={onBack} className="p-2 hover:bg-white/10 rounded-xl transition-all hover:scale-105">
           <ChevronLeft size={24} />
         </button>
-        <h2 className="text-2xl font-bold">Stress Level Predictor</h2>
+        <div>
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">Stress Analyzer</h2>
+          <p className="text-gray-400 text-sm mt-1">Monitor your mental wellness</p>
+        </div>
       </div>
 
-      <div className="max-w-md mx-auto">
+      <div className="max-w-2xl mx-auto">
+        {/* Input Cards */}
         <motion.div 
-          className="bg-white/5 border border-white/10 rounded-xl p-6 mb-4"
+          className="grid gap-4 mb-6"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm text-gray-400 mb-2">Daily Study Hours (0-12)</label>
-              <input
-                type="range"
-                min="0"
-                max="12"
-                value={inputs.study_hours}
-                onChange={(e) => setInputs({...inputs, study_hours: Number(e.target.value)})}
-                className="w-full accent-purple-500"
-              />
-              <div className="text-center font-semibold">{inputs.study_hours} hours</div>
+          {/* Study Hours Card */}
+          <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 border border-purple-500/20 rounded-2xl p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-500/20 rounded-xl">
+                  <BookOpen size={20} className="text-purple-400" />
+                </div>
+                <div>
+                  <label className="text-white font-semibold">Study Hours</label>
+                  <p className="text-gray-400 text-xs">Daily study time</p>
+                </div>
+              </div>
+              <div className="text-2xl font-bold text-purple-400">{inputs.study_hours}h</div>
             </div>
-
-            <div>
-              <label className="block text-sm text-gray-400 mb-2">Daily Sleep Hours (0-12)</label>
-              <input
-                type="range"
-                min="0"
-                max="12"
-                value={inputs.sleep_hours}
-                onChange={(e) => setInputs({...inputs, sleep_hours: Number(e.target.value)})}
-                className="w-full accent-blue-500"
-              />
-              <div className="text-center font-semibold">{inputs.sleep_hours} hours</div>
-            </div>
-
-            <div>
-              <label className="block text-sm text-gray-400 mb-2">Daily Screen Time (0-12)</label>
-              <input
-                type="range"
-                min="0"
-                max="12"
-                value={inputs.screen_time}
-                onChange={(e) => setInputs({...inputs, screen_time: Number(e.target.value)})}
-                className="w-full accent-pink-500"
-              />
-              <div className="text-center font-semibold">{inputs.screen_time} hours</div>
+            <input
+              type="range"
+              min="0"
+              max="12"
+              value={inputs.study_hours}
+              onChange={(e) => setInputs({...inputs, study_hours: Number(e.target.value)})}
+              className="w-full accent-purple-500 h-2 bg-white/10 rounded-full appearance-none cursor-pointer"
+            />
+            <div className="flex justify-between text-xs text-gray-500 mt-2">
+              <span>0h</span>
+              <span>6h</span>
+              <span>12h</span>
             </div>
           </div>
 
-          <button
-            onClick={handlePredict}
-            disabled={loading}
-            className="w-full mt-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-semibold flex items-center justify-center gap-2 hover:from-purple-500 hover:to-pink-500 transition-all disabled:opacity-50"
-          >
-            {loading ? (
-              <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity }}>
-                <Sparkles size={20} />
-              </motion.div>
-            ) : (
-              <>
-                <Brain size={20} />
-                Analyze Stress Level
-              </>
-            )}
-          </button>
+          {/* Sleep Hours Card */}
+          <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/20 rounded-2xl p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-500/20 rounded-xl">
+                  <Zap size={20} className="text-blue-400" />
+                </div>
+                <div>
+                  <label className="text-white font-semibold">Sleep Hours</label>
+                  <p className="text-gray-400 text-xs">Daily rest time</p>
+                </div>
+              </div>
+              <div className="text-2xl font-bold text-blue-400">{inputs.sleep_hours}h</div>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="12"
+              value={inputs.sleep_hours}
+              onChange={(e) => setInputs({...inputs, sleep_hours: Number(e.target.value)})}
+              className="w-full accent-blue-500 h-2 bg-white/10 rounded-full appearance-none cursor-pointer"
+            />
+            <div className="flex justify-between text-xs text-gray-500 mt-2">
+              <span>0h</span>
+              <span>6h</span>
+              <span>12h</span>
+            </div>
+          </div>
+
+          {/* Screen Time Card */}
+          <div className="bg-gradient-to-br from-pink-500/10 to-pink-600/5 border border-pink-500/20 rounded-2xl p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-pink-500/20 rounded-xl">
+                  <Activity size={20} className="text-pink-400" />
+                </div>
+                <div>
+                  <label className="text-white font-semibold">Screen Time</label>
+                  <p className="text-gray-400 text-xs">Daily device usage</p>
+                </div>
+              </div>
+              <div className="text-2xl font-bold text-pink-400">{inputs.screen_time}h</div>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="12"
+              value={inputs.screen_time}
+              onChange={(e) => setInputs({...inputs, screen_time: Number(e.target.value)})}
+              className="w-full accent-pink-500 h-2 bg-white/10 rounded-full appearance-none cursor-pointer"
+            />
+            <div className="flex justify-between text-xs text-gray-500 mt-2">
+              <span>0h</span>
+              <span>6h</span>
+              <span>12h</span>
+            </div>
+          </div>
         </motion.div>
 
+        {/* Analyze Button */}
+        <motion.button
+          onClick={handlePredict}
+          disabled={loading}
+          className="w-full py-4 bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 hover:shadow-lg hover:shadow-purple-500/30 transition-all disabled:opacity-50 mb-8"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          {loading ? (
+            <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity }}>
+              <Sparkles size={24} />
+            </motion.div>
+          ) : (
+            <>
+              <Brain size={24} />
+              Analyze My Stress Level
+            </>
+          )}
+        </motion.button>
+
+        {/* Results Card */}
         {result && (
           <motion.div 
-            className="bg-white/5 border border-white/10 rounded-xl p-6"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
+            className={`bg-gradient-to-br ${currentLevel?.color} rounded-3xl p-1`}
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 200, damping: 15 }}
           >
-            <div className="text-center mb-4">
-              <div className="text-sm text-gray-400 mb-1">Your Stress Level</div>
-              <div className={`text-4xl font-bold ${levelColors[result.level]}`}>
-                {result.level}
+            <div className="bg-gray-900/95 rounded-[22px] p-6">
+              {/* Header */}
+              <div className="text-center mb-6">
+                <motion.div 
+                  className="text-6xl mb-2"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.2, type: "spring" }}
+                >
+                  {currentLevel?.icon}
+                </motion.div>
+                <div className="text-gray-400 text-sm uppercase tracking-wider mb-1">Stress Level</div>
+                <div className={`text-5xl font-bold ${currentLevel?.textColor} mb-2`}>
+                  {result.level}
+                </div>
+                <div className="text-gray-400">{currentLevel?.desc}</div>
+                <div className="mt-3 inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 rounded-full text-sm">
+                  <Activity size={14} />
+                  Confidence: {result.confidence}%
+                </div>
               </div>
-              <div className="text-sm text-gray-400 mt-1">
-                Confidence: {result.confidence}%
-              </div>
-            </div>
 
-            <div className="bg-white/5 rounded-lg p-4 mb-4">
-              <p className="text-sm">{result.recommendation}</p>
-            </div>
-
-            {result.tips.length > 0 && (
-              <div>
-                <h4 className="font-semibold mb-2 text-sm">Tips for You:</h4>
-                <ul className="space-y-1">
-                  {result.tips.map((tip, i) => (
-                    <li key={i} className="text-sm text-gray-400 flex items-start gap-2">
-                      <CheckCircle size={14} className="mt-0.5 text-green-400 flex-shrink-0" />
-                      {tip}
-                    </li>
-                  ))}
-                </ul>
+              {/* Recommendation */}
+              <div className={`${currentLevel?.bgColor} rounded-2xl p-4 mb-4 border border-white/10`}>
+                <div className="flex items-start gap-3">
+                  <div className={`p-2 rounded-xl ${currentLevel?.bgColor} ${currentLevel?.textColor}`}>
+                    <Brain size={20} />
+                  </div>
+                  <div>
+                    <div className="font-semibold mb-1">AI Recommendation</div>
+                    <p className="text-gray-300 text-sm leading-relaxed">{result.recommendation}</p>
+                  </div>
+                </div>
               </div>
-            )}
+
+              {/* Tips */}
+              {result.tips.length > 0 && (
+                <div className="bg-white/5 rounded-2xl p-4 border border-white/10">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="p-1.5 bg-green-500/20 rounded-lg">
+                      <CheckCircle size={16} className="text-green-400" />
+                    </div>
+                    <span className="font-semibold">Wellness Tips</span>
+                  </div>
+                  <ul className="space-y-2">
+                    {result.tips.map((tip, i) => (
+                      <motion.li 
+                        key={i} 
+                        className="flex items-start gap-3 text-sm text-gray-300"
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.3 + i * 0.1 }}
+                      >
+                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-green-500/20 text-green-400 text-xs flex items-center justify-center font-bold">
+                          {i + 1}
+                        </span>
+                        <span className="leading-relaxed">{tip}</span>
+                      </motion.li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
           </motion.div>
         )}
       </div>
@@ -298,7 +391,7 @@ function StressPredictor({ onBack }) {
   );
 }
 
-// Performance Predictor Component
+// Performance Predictor Component - Enhanced UI
 function PerformancePredictor({ onBack }) {
   const [inputs, setInputs] = useState({ attendance: 85, study_hours: 4, assignments_completed: 80 });
   const [result, setResult] = useState(null);
@@ -316,117 +409,238 @@ function PerformancePredictor({ onBack }) {
     setLoading(false);
   };
 
-  const levelColors = {
-    Excellent: 'text-green-400',
-    Good: 'text-blue-400',
-    Average: 'text-yellow-400',
-    Poor: 'text-red-400'
+  const levelConfig = {
+    Excellent: { color: 'from-green-500 to-emerald-600', bgColor: 'bg-green-500/20', textColor: 'text-green-400', icon: '🏆', desc: 'Outstanding work!' },
+    Good: { color: 'from-blue-500 to-cyan-600', bgColor: 'bg-blue-500/20', textColor: 'text-blue-400', icon: '⭐', desc: 'Keep it up!' },
+    Average: { color: 'from-yellow-500 to-orange-500', bgColor: 'bg-yellow-500/20', textColor: 'text-yellow-400', icon: '📈', desc: 'Room for growth' },
+    Poor: { color: 'from-red-500 to-rose-600', bgColor: 'bg-red-500/20', textColor: 'text-red-400', icon: '⚠️', desc: 'Action needed' }
   };
+
+  const currentLevel = result ? levelConfig[result.level] : null;
 
   return (
     <div className="h-full overflow-y-auto p-6">
-      <div className="flex items-center gap-3 mb-6">
-        <button onClick={onBack} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+      <div className="flex items-center gap-3 mb-8">
+        <button onClick={onBack} className="p-2 hover:bg-white/10 rounded-xl transition-all hover:scale-105">
           <ChevronLeft size={24} />
         </button>
-        <h2 className="text-2xl font-bold">Performance Predictor</h2>
+        <div>
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">Performance Analyzer</h2>
+          <p className="text-gray-400 text-sm mt-1">Predict your academic success</p>
+        </div>
       </div>
 
-      <div className="max-w-md mx-auto">
+      <div className="max-w-2xl mx-auto">
+        {/* Input Cards */}
         <motion.div 
-          className="bg-white/5 border border-white/10 rounded-xl p-6 mb-4"
+          className="grid gap-4 mb-6"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm text-gray-400 mb-2">Attendance % (0-100)</label>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={inputs.attendance}
-                onChange={(e) => setInputs({...inputs, attendance: Number(e.target.value)})}
-                className="w-full accent-green-500"
-              />
-              <div className="text-center font-semibold">{inputs.attendance}%</div>
+          {/* Attendance Card */}
+          <div className="bg-gradient-to-br from-green-500/10 to-emerald-600/5 border border-green-500/20 rounded-2xl p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-500/20 rounded-xl">
+                  <CheckCircle size={20} className="text-green-400" />
+                </div>
+                <div>
+                  <label className="text-white font-semibold">Attendance</label>
+                  <p className="text-gray-400 text-xs">Class presence rate</p>
+                </div>
+              </div>
+              <div className="text-2xl font-bold text-green-400">{inputs.attendance}%</div>
             </div>
-
-            <div>
-              <label className="block text-sm text-gray-400 mb-2">Daily Study Hours (0-12)</label>
-              <input
-                type="range"
-                min="0"
-                max="12"
-                value={inputs.study_hours}
-                onChange={(e) => setInputs({...inputs, study_hours: Number(e.target.value)})}
-                className="w-full accent-blue-500"
-              />
-              <div className="text-center font-semibold">{inputs.study_hours} hours</div>
-            </div>
-
-            <div>
-              <label className="block text-sm text-gray-400 mb-2">Assignment Completion % (0-100)</label>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={inputs.assignments_completed}
-                onChange={(e) => setInputs({...inputs, assignments_completed: Number(e.target.value)})}
-                className="w-full accent-purple-500"
-              />
-              <div className="text-center font-semibold">{inputs.assignments_completed}%</div>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={inputs.attendance}
+              onChange={(e) => setInputs({...inputs, attendance: Number(e.target.value)})}
+              className="w-full accent-green-500 h-2 bg-white/10 rounded-full appearance-none cursor-pointer"
+            />
+            <div className="flex justify-between text-xs text-gray-500 mt-2">
+              <span>0%</span>
+              <span>50%</span>
+              <span>100%</span>
             </div>
           </div>
 
-          <button
-            onClick={handlePredict}
-            disabled={loading}
-            className="w-full mt-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl font-semibold flex items-center justify-center gap-2 hover:from-blue-500 hover:to-purple-500 transition-all disabled:opacity-50"
-          >
-            {loading ? (
-              <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity }}>
-                <Sparkles size={20} />
-              </motion.div>
-            ) : (
-              <>
-                <Target size={20} />
-                Predict Performance
-              </>
-            )}
-          </button>
+          {/* Study Hours Card */}
+          <div className="bg-gradient-to-br from-blue-500/10 to-cyan-600/5 border border-blue-500/20 rounded-2xl p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-500/20 rounded-xl">
+                  <BookOpen size={20} className="text-blue-400" />
+                </div>
+                <div>
+                  <label className="text-white font-semibold">Study Hours</label>
+                  <p className="text-gray-400 text-xs">Daily study time</p>
+                </div>
+              </div>
+              <div className="text-2xl font-bold text-blue-400">{inputs.study_hours}h</div>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="12"
+              value={inputs.study_hours}
+              onChange={(e) => setInputs({...inputs, study_hours: Number(e.target.value)})}
+              className="w-full accent-blue-500 h-2 bg-white/10 rounded-full appearance-none cursor-pointer"
+            />
+            <div className="flex justify-between text-xs text-gray-500 mt-2">
+              <span>0h</span>
+              <span>6h</span>
+              <span>12h</span>
+            </div>
+          </div>
+
+          {/* Assignment Completion Card */}
+          <div className="bg-gradient-to-br from-purple-500/10 to-violet-600/5 border border-purple-500/20 rounded-2xl p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-500/20 rounded-xl">
+                  <Target size={20} className="text-purple-400" />
+                </div>
+                <div>
+                  <label className="text-white font-semibold">Assignment Completion</label>
+                  <p className="text-gray-400 text-xs">Tasks finished rate</p>
+                </div>
+              </div>
+              <div className="text-2xl font-bold text-purple-400">{inputs.assignments_completed}%</div>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={inputs.assignments_completed}
+              onChange={(e) => setInputs({...inputs, assignments_completed: Number(e.target.value)})}
+              className="w-full accent-purple-500 h-2 bg-white/10 rounded-full appearance-none cursor-pointer"
+            />
+            <div className="flex justify-between text-xs text-gray-500 mt-2">
+              <span>0%</span>
+              <span>50%</span>
+              <span>100%</span>
+            </div>
+          </div>
         </motion.div>
 
+        {/* Predict Button */}
+        <motion.button
+          onClick={handlePredict}
+          disabled={loading}
+          className="w-full py-4 bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 hover:shadow-lg hover:shadow-blue-500/30 transition-all disabled:opacity-50 mb-8"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          {loading ? (
+            <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity }}>
+              <Sparkles size={24} />
+            </motion.div>
+          ) : (
+            <>
+              <TrendingUp size={24} />
+              Predict My Performance
+            </>
+          )}
+        </motion.button>
+
+        {/* Results Card */}
         {result && (
           <motion.div 
-            className="bg-white/5 border border-white/10 rounded-xl p-6"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
+            className={`bg-gradient-to-br ${currentLevel?.color} rounded-3xl p-1`}
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 200, damping: 15 }}
           >
-            <div className="text-center mb-4">
-              <div className="text-sm text-gray-400 mb-1">Predicted Performance</div>
-              <div className={`text-3xl font-bold ${levelColors[result.level]}`}>
-                {result.level}
+            <div className="bg-gray-900/95 rounded-[22px] p-6">
+              {/* Header */}
+              <div className="text-center mb-6">
+                <motion.div 
+                  className="text-6xl mb-2"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.2, type: "spring" }}
+                >
+                  {currentLevel?.icon}
+                </motion.div>
+                <div className="text-gray-400 text-sm uppercase tracking-wider mb-1">Predicted Performance</div>
+                <div className={`text-5xl font-bold ${currentLevel?.textColor} mb-2`}>
+                  {result.level}
+                </div>
+                <div className="text-gray-400">{currentLevel?.desc}</div>
+                <div className="mt-3 flex items-center justify-center gap-4">
+                  <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 rounded-full text-sm">
+                    <Activity size={14} />
+                    Confidence: {result.confidence}%
+                  </div>
+                  {result.scores?.overall && (
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 rounded-full text-sm">
+                      <Award size={14} />
+                      Score: {result.scores.overall}/100
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="text-sm text-gray-400 mt-1">
-                Confidence: {result.confidence}% • Overall: {result.scores?.overall}/100
+
+              {/* Score Breakdown */}
+              {result.scores && (
+                <div className="grid grid-cols-3 gap-3 mb-4">
+                  <div className="bg-white/5 rounded-xl p-3 text-center border border-white/10">
+                    <div className="text-xs text-gray-400 mb-1">Attendance</div>
+                    <div className="text-lg font-bold text-green-400">{result.scores.attendance}</div>
+                  </div>
+                  <div className="bg-white/5 rounded-xl p-3 text-center border border-white/10">
+                    <div className="text-xs text-gray-400 mb-1">Study</div>
+                    <div className="text-lg font-bold text-blue-400">{result.scores.study}</div>
+                  </div>
+                  <div className="bg-white/5 rounded-xl p-3 text-center border border-white/10">
+                    <div className="text-xs text-gray-400 mb-1">Assignments</div>
+                    <div className="text-lg font-bold text-purple-400">{result.scores.assignments}</div>
+                  </div>
+                </div>
+              )}
+
+              {/* Recommendation */}
+              <div className={`${currentLevel?.bgColor} rounded-2xl p-4 mb-4 border border-white/10`}>
+                <div className="flex items-start gap-3">
+                  <div className={`p-2 rounded-xl ${currentLevel?.bgColor} ${currentLevel?.textColor}`}>
+                    <Brain size={20} />
+                  </div>
+                  <div>
+                    <div className="font-semibold mb-1">AI Recommendation</div>
+                    <p className="text-gray-300 text-sm leading-relaxed">{result.recommendation}</p>
+                  </div>
+                </div>
               </div>
-            </div>
 
-            <div className="bg-white/5 rounded-lg p-4 mb-4">
-              <p className="text-sm">{result.recommendation}</p>
-            </div>
-
-            <div>
-              <h4 className="font-semibold mb-2 text-sm">Improvement Tips:</h4>
-              <ul className="space-y-1">
-                {result.improvement_tips.map((tip, i) => (
-                  <li key={i} className="text-sm text-gray-400 flex items-start gap-2">
-                    <Zap size={14} className="mt-0.5 text-yellow-400 flex-shrink-0" />
-                    {tip}
-                  </li>
-                ))}
-              </ul>
+              {/* Improvement Tips */}
+              {result.improvement_tips.length > 0 && (
+                <div className="bg-white/5 rounded-2xl p-4 border border-white/10">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="p-1.5 bg-yellow-500/20 rounded-lg">
+                      <Zap size={16} className="text-yellow-400" />
+                    </div>
+                    <span className="font-semibold">Improvement Tips</span>
+                  </div>
+                  <ul className="space-y-2">
+                    {result.improvement_tips.map((tip, i) => (
+                      <motion.li 
+                        key={i} 
+                        className="flex items-start gap-3 text-sm text-gray-300"
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.3 + i * 0.1 }}
+                      >
+                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-yellow-500/20 text-yellow-400 text-xs flex items-center justify-center font-bold">
+                          {i + 1}
+                        </span>
+                        <span className="leading-relaxed">{tip}</span>
+                      </motion.li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </motion.div>
         )}
@@ -1222,11 +1436,24 @@ function NotesGenerator({ onBack }) {
     }
     setLoading(true);
     try {
+      console.log('Generating notes for topic:', topic, 'detail level:', detailLevel);
       const response = await api.post('/api/notes', { topic, detail_level: detailLevel });
+      console.log('Notes response:', response.data);
+      
+      // Validate response has expected structure
+      if (!response.data || !response.data.heading) {
+        console.error('Invalid notes response:', response.data);
+        toast.error('Invalid notes data received from server');
+        setLoading(false);
+        return;
+      }
+      
       setNotes(response.data);
-      toast.success('Notes generated!');
+      toast.success('Notes generated successfully!');
     } catch (error) {
-      toast.error('Failed to generate notes');
+      console.error('Notes generation error:', error);
+      console.error('Error response:', error.response?.data);
+      toast.error('Failed to generate notes: ' + (error.response?.data?.detail || error.message || 'Unknown error'));
     }
     setLoading(false);
   };
@@ -1247,12 +1474,33 @@ function NotesGenerator({ onBack }) {
     }
     setLoading(true);
     try {
+      console.log('Generating notes from files:', fileIds, 'detail level:', detailLevel);
       const response = await generateNotesFromFiles(fileIds, detailLevel);
-      setNotes(response.data);
-      toast.success('Notes generated from files!');
+      console.log('Notes from files response:', response);
+      
+      // Handle different response structures
+      const notesData = response.data || response;
+      
+      // Validate response
+      if (!notesData || (!notesData.heading && !notesData.notes_content)) {
+        console.error('Invalid notes response:', notesData);
+        toast.error('Invalid notes data received from server');
+        setLoading(false);
+        return;
+      }
+      
+      // If response has notes_content, use it (from history format)
+      if (notesData.notes_content) {
+        setNotes(notesData.notes_content);
+      } else {
+        setNotes(notesData);
+      }
+      
+      toast.success('Notes generated from files successfully!');
     } catch (error) {
       console.error('Notes generation error:', error);
-      toast.error('Failed to generate notes from files');
+      console.error('Error response:', error.response?.data);
+      toast.error('Failed to generate notes from files: ' + (error.response?.data?.detail || error.message || 'Unknown error'));
     }
     setLoading(false);
   };
@@ -1308,16 +1556,32 @@ function NotesGenerator({ onBack }) {
             </div>
 
             <div>
-              <label className="block text-sm text-gray-400 mb-2">Detail Level</label>
-              <select
-                value={detailLevel}
-                onChange={(e) => setDetailLevel(e.target.value)}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-purple-500"
-              >
-                <option value="brief">Brief Overview</option>
-                <option value="medium">Medium Detail</option>
-                <option value="detailed">Detailed Notes</option>
-              </select>
+              <label className="block text-sm text-gray-400 mb-3">Detail Level</label>
+              <div className="flex gap-2">
+                {[
+                  { value: 'brief', label: 'Brief', desc: 'Quick overview', color: 'from-blue-500 to-blue-600', icon: FileText },
+                  { value: 'medium', label: 'Medium', desc: 'Balanced detail', color: 'from-purple-500 to-purple-600', icon: BookOpen },
+                  { value: 'detailed', label: 'Detailed', desc: 'Comprehensive', color: 'from-green-500 to-teal-600', icon: Target }
+                ].map((level) => {
+                  const Icon = level.icon;
+                  const isSelected = detailLevel === level.value;
+                  return (
+                    <button
+                      key={level.value}
+                      onClick={() => setDetailLevel(level.value)}
+                      className={`flex-1 p-4 rounded-xl transition-all ${
+                        isSelected
+                          ? `bg-gradient-to-r ${level.color} text-white shadow-lg transform scale-[1.02]`
+                          : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      <Icon size={20} className={`mx-auto mb-2 ${isSelected ? 'text-white' : 'text-gray-500'}`} />
+                      <div className="font-semibold text-sm">{level.label}</div>
+                      <div className={`text-xs mt-1 ${isSelected ? 'text-white/80' : 'text-gray-500'}`}>{level.desc}</div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
@@ -1407,16 +1671,32 @@ function NotesGenerator({ onBack }) {
             )}
 
             <div>
-              <label className="block text-sm text-gray-400 mb-2">Detail Level</label>
-              <select
-                value={detailLevel}
-                onChange={(e) => setDetailLevel(e.target.value)}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:border-purple-500"
-              >
-                <option value="brief">Brief Overview</option>
-                <option value="medium">Medium Detail</option>
-                <option value="detailed">Detailed Notes</option>
-              </select>
+              <label className="block text-sm text-gray-400 mb-3">Detail Level</label>
+              <div className="flex gap-2">
+                {[
+                  { value: 'brief', label: 'Brief', desc: 'Quick overview', color: 'from-blue-500 to-blue-600', icon: FileText },
+                  { value: 'medium', label: 'Medium', desc: 'Balanced detail', color: 'from-purple-500 to-purple-600', icon: BookOpen },
+                  { value: 'detailed', label: 'Detailed', desc: 'Comprehensive', color: 'from-green-500 to-teal-600', icon: Target }
+                ].map((level) => {
+                  const Icon = level.icon;
+                  const isSelected = detailLevel === level.value;
+                  return (
+                    <button
+                      key={level.value}
+                      onClick={() => setDetailLevel(level.value)}
+                      className={`flex-1 p-4 rounded-xl transition-all ${
+                        isSelected
+                          ? `bg-gradient-to-r ${level.color} text-white shadow-lg transform scale-[1.02]`
+                          : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      <Icon size={20} className={`mx-auto mb-2 ${isSelected ? 'text-white' : 'text-gray-500'}`} />
+                      <div className="font-semibold text-sm">{level.label}</div>
+                      <div className={`text-xs mt-1 ${isSelected ? 'text-white/80' : 'text-gray-500'}`}>{level.desc}</div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
