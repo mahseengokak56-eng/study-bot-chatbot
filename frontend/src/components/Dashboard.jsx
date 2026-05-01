@@ -1628,8 +1628,8 @@ function Dashboard() {
 
   // Track chat count for assistant
   useEffect(() => {
-    setChatCount(messages.length);
-  }, [messages]);
+    setChatCount(activeSession?.messages?.length || 0);
+  }, [activeSession?.messages]);
 
   const menuItems = [
     { id: 'chat', label: 'Chat', icon: MessageSquare },
