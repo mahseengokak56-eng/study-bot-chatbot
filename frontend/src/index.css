@@ -169,7 +169,45 @@ html.light .bg-gemini-message-bot {
 
 /* Light mode borders */
 html.light .border-gemini-border {
-  border-color: #e2e8f0 !important;
+  border-color: #ffffff !important;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Light mode chat input container */
+html.light .bg-gemini-surface {
+  background: #ffffff !important;
+  border: 2px solid #ffffff !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05) !important;
+}
+
+html.light .bg-gemini-surface:focus-within {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15), 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+}
+
+/* Light mode textarea - black text */
+html.light textarea {
+  color: #1a1a2e !important;
+}
+
+/* Light mode gemini text */
+html.light .text-gemini-text {
+  color: #1a1a2e !important;
+}
+
+/* Light mode placeholder */
+html.light .placeholder-gemini-muted::placeholder {
+  color: #6b7280 !important;
+}
+
+/* Light mode button icons */
+html.light .text-gemini-muted {
+  color: #5f6368 !important;
+}
+
+/* Light mode hover states for buttons */
+html.light .hover\:bg-gemini-hover:hover {
+  background: rgba(0, 0, 0, 0.05) !important;
 }
 
 /* Light mode text colors */
