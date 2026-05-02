@@ -173,16 +173,28 @@ html.light .border-gemini-border {
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1), 0 4px 12px rgba(0, 0, 0, 0.08) !important;
 }
 
-/* Light mode chat input container */
-html.light .bg-gemini-surface {
+/* Light mode user message bubble - WHITE background */
+html.light .bg-gemini-userBubble {
   background: #ffffff !important;
-  border: 2px solid #ffffff !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05) !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+}
+
+html.light .bg-gemini-userBubble p,
+html.light .bg-gemini-userBubble .whitespace-pre-wrap {
+  color: #1a1a2e !important;
+}
+
+/* Light mode chat input container - REMOVE white border */
+html.light .bg-gemini-surface {
+  background: rgba(0, 0, 0, 0.03) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
 }
 
 html.light .bg-gemini-surface:focus-within {
   border-color: #3b82f6 !important;
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15), 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15), 0 0 0 1px rgba(59, 130, 246, 0.2) !important;
 }
 
 /* Light mode textarea - black text */

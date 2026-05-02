@@ -170,7 +170,7 @@ export default function Message({ message }) {
         <div className={clsx(
           "rounded-2xl text-sm md:text-base leading-relaxed w-full",
           isBot && "text-gemini-text bg-transparent py-1",
-          isUser && "text-white bg-gemini-userBubble shadow-sm px-4 py-3",
+          isUser && "text-gemini-text bg-gemini-userBubble shadow-sm px-4 py-3",
           isError && "text-red-300 bg-red-950/40 border border-red-800/50 px-4 py-3"
         )}>
           {isBot ? (
@@ -181,7 +181,7 @@ export default function Message({ message }) {
               {message.content || ' '}
             </ReactMarkdown>
           ) : (
-            <p className="whitespace-pre-wrap text-white">{message.content}</p>
+            <p className="whitespace-pre-wrap">{message.content}</p>
           )}
         </div>
       </div>

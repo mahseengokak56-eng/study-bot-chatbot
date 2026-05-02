@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { logoutUser, getCurrentUser, api, uploadFiles, checkBackendHealth, saveQuizResult, getQuizStats, getQuizHistory, getNotesHistory, generateQuizFromFiles, generateNotesFromFiles, getRecommendations } from '../utils/api';
-import RobotAvatar3D from './RobotAvatar3D';
+import PandaAvatar3D from './PandaAvatar3D';
 import toast from 'react-hot-toast';
 
 // Dashboard Stats Component
@@ -2116,8 +2116,8 @@ function Dashboard() {
         </div>
       </main>
 
-      {/* 3D Robot Study Buddy */}
-      <RobotAvatar3D 
+      {/* 3D Panda Study Buddy */}
+      <PandaAvatar3D 
         currentView={activeView}
         quizScore={recommendations?.based_on?.quiz_performance}
         stressLevel={recommendations?.based_on?.stress_level}
