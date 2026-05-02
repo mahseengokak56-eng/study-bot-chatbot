@@ -14,18 +14,28 @@
   --border-color: #444746;
   --user-bubble-color: #2B2D31;
   --message-bot-color: #1E1F20;
+  --card-bg: rgba(255, 255, 255, 0.05);
+  --card-border: rgba(255, 255, 255, 0.1);
+  --card-hover: rgba(255, 255, 255, 0.1);
+  --input-bg: rgba(255, 255, 255, 0.05);
+  --button-secondary: rgba(255, 255, 255, 0.1);
 }
 
 /* Light mode */
 html.light {
-  --bg-color: #ffffff;
-  --surface-color: #f8f9fa;
+  --bg-color: #f0f4f8;
+  --surface-color: #ffffff;
   --hover-color: #e8eaed;
-  --text-color: #1f1f1f;
+  --text-color: #1a1a2e;
   --muted-color: #5f6368;
-  --border-color: #dadce0;
+  --border-color: #d1d5db;
   --user-bubble-color: #2d2d2d;
   --message-bot-color: #f8f9fa;
+  --card-bg: rgba(255, 255, 255, 0.8);
+  --card-border: rgba(0, 0, 0, 0.08);
+  --card-hover: rgba(0, 0, 0, 0.05);
+  --input-bg: rgba(0, 0, 0, 0.03);
+  --button-secondary: rgba(0, 0, 0, 0.05);
 }
 
 @layer base {
@@ -36,10 +46,148 @@ html.light {
     overflow-x: hidden;
   }
   
+  html.light body {
+    background-color: #f0f4f8;
+  }
+  
   #root {
     min-height: 100vh;
     background-color: #131314; /* Fallback */
   }
+  
+  html.light #root {
+    background-color: #f0f4f8;
+  }
+}
+
+/* Light mode specific overrides for visibility */
+html.light {
+  /* Card backgrounds that work in light mode */
+  --tw-bg-opacity: 1;
+}
+
+html.light .bg-white\/5 {
+  background-color: rgba(0, 0, 0, 0.03) !important;
+}
+
+html.light .bg-white\/10 {
+  background-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+html.light .border-white\/10 {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+html.light .border-white\/5 {
+  border-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+html.light .text-gray-400 {
+  color: #5f6368 !important;
+}
+
+html.light .text-gray-300 {
+  color: #4a5568 !important;
+}
+
+html.light .text-gray-200 {
+  color: #2d3748 !important;
+}
+
+html.light .text-white {
+  color: #1a1a2e !important;
+}
+
+/* Light mode - Attractive Gradient Backgrounds */
+html.light {
+  background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 50%, #f0f4f8 100%);
+}
+
+html.light body {
+  background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 50%, #f0f4f8 100%);
+  background-attachment: fixed;
+}
+
+/* Light mode cards with subtle shadows */
+html.light .bg-white\/5,
+html.light .bg-white\/10,
+html.light [class*="bg-white/5"],
+html.light [class*="bg-white/10"] {
+  background: rgba(255, 255, 255, 0.7) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Light mode input fields */
+html.light input[type="text"],
+html.light input[type="range"],
+html.light select,
+html.light textarea {
+  background: rgba(255, 255, 255, 0.8) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  color: #1a1a2e !important;
+}
+
+html.light input::placeholder {
+  color: #6b7280 !important;
+}
+
+/* Light mode buttons */
+html.light button[class*="bg-white/5"],
+html.light button[class*="bg-white/10"] {
+  background: rgba(255, 255, 255, 0.8) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+html.light button[class*="bg-white/5"]:hover,
+html.light button[class*="bg-white/10"]:hover {
+  background: rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12) !important;
+  transform: translateY(-1px);
+}
+
+/* Light mode - Gradient text support */
+html.light [class*="bg-clip-text"] {
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+}
+
+/* Light mode hover states */
+html.light .hover\:bg-white\/10:hover {
+  background: rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Light mode chat area */
+html.light .bg-gemini-bg {
+  background: #f8fafc !important;
+}
+
+html.light .bg-gemini-message-bot {
+  background: #ffffff !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Light mode borders */
+html.light .border-gemini-border {
+  border-color: #e2e8f0 !important;
+}
+
+/* Light mode text colors */
+html.light .text-gemini-text {
+  color: #1a1a2e !important;
+}
+
+html.light .text-gemini-muted {
+  color: #5f6368 !important;
+}
+
+/* Light mode scrollbar */
+html.light ::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+}
+
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
 }
 
 /* Custom scrollbar for webkit browsers */

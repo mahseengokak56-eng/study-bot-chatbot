@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Bot, X, ChevronLeft, ChevronRight, Sparkles, 
   MessageCircle, Brain, Target, BookOpen, Zap,
-  Coffee, TrendingUp, AlertCircle, Lightbulb
+  Coffee, TrendingUp, AlertCircle, Lightbulb,
+  ThumbsUp, ThumbsDown, HelpCircle
 } from 'lucide-react';
 import { getCurrentUser } from '../utils/api';
 
@@ -14,12 +15,16 @@ const AssistantBot = ({
   recentTopics = [],
   chatCount = 0,
   isExpanded: externalExpanded,
-  setIsExpanded: setExternalExpanded
+  setIsExpanded: setExternalExpanded,
+  onSuggestionAccept,
+  onSuggestionReject
 }) => {
   const [isExpanded, setIsExpanded] = useState(externalExpanded || false);
   const [currentMessage, setCurrentMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [messageHistory, setMessageHistory] = useState([]);
+  const [showResponseOptions, setShowResponseOptions] = useState(false);
+  const [currentSuggestion, setCurrentSuggestion] = useState(null);
   const currentUser = getCurrentUser();
   const messageRef = useRef(0);
 
@@ -97,9 +102,59 @@ const AssistantBot = ({
     return messages[Math.floor(Math.random() * messages.length)];
   };
 
+  // Check if message is a suggestion that needs Yes/No response
+  const isSuggestionMessage = (msg) => {
+    const suggestionPatterns = [
+      'want to test your knowledge',
+      'try a quiz',
+      'need help',
+      'ready for',
+      'how about',
+      'would you like',
+      'shall we',
+      'should we'
+    ];
+    return suggestionPatterns.some(pattern => msg.toLowerCase().includes(pattern));
+  };
+
+  // Handle user response to suggestion
+  const handleYesResponse = () => {
+    setShowResponseOptions(false);
+    const yesResponses = [
+      "Great! Let's do it! 🚀",
+      "Awesome! Getting started... ✨",
+      "Perfect! Here we go! 🎯",
+      "Excellent choice! 💪"
+    ];
+    const response = yesResponses[Math.floor(Math.random() * yesResponses.length)];
+    typeMessage(response);
+    
+    // Trigger the callback if provided
+    if (onSuggestionAccept && currentSuggestion) {
+      onSuggestionAccept(currentSuggestion);
+    }
+  };
+
+  const handleNoResponse = () => {
+    setShowResponseOptions(false);
+    const noResponses = [
+      "No problem! Maybe later! 😊",
+      "That's okay! Let me know if you need anything else! 💡",
+      "Sure! I'm here whenever you're ready! 🤝",
+      "Alright! Take your time! ☕"
+    ];
+    const response = noResponses[Math.floor(Math.random() * noResponses.length)];
+    typeMessage(response);
+    
+    if (onSuggestionReject && currentSuggestion) {
+      onSuggestionReject(currentSuggestion);
+    }
+  };
+
   // Typewriter effect
   const typeMessage = (message) => {
     setIsTyping(true);
+    setShowResponseOptions(false);
     setCurrentMessage('');
     let index = 0;
     
@@ -111,6 +166,12 @@ const AssistantBot = ({
         clearInterval(interval);
         setIsTyping(false);
         setMessageHistory(prev => [...prev, { text: message, timestamp: Date.now() }]);
+        
+        // Check if this message needs Yes/No response
+        if (isSuggestionMessage(message)) {
+          setCurrentSuggestion(message);
+          setTimeout(() => setShowResponseOptions(true), 500);
+        }
       }
     }, 30);
     
@@ -195,11 +256,40 @@ const AssistantBot = ({
                 <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shrink-0">
                   <Bot size={16} className="text-white" />
                 </div>
-                <div className="bg-white/5 rounded-lg p-3 max-w-[200px]">
-                  <p className="text-sm text-gemini-text">{currentMessage}</p>
-                  {isTyping && (
-                    <span className="text-gemini-muted text-xs">Typing...</span>
-                  )}
+                <div className="flex-1">
+                  <div className="bg-white/5 rounded-lg p-3 max-w-[220px]">
+                    <p className="text-sm text-gemini-text">{currentMessage}</p>
+                    {isTyping && (
+                      <span className="text-gemini-muted text-xs">Typing...</span>
+                    )}
+                  </div>
+                  
+                  {/* Yes/No Response Buttons */}
+                  <AnimatePresence>
+                    {showResponseOptions && !isTyping && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -10, scale: 0.9 }}
+                        className="flex gap-2 mt-2 ml-1"
+                      >
+                        <button
+                          onClick={handleYesResponse}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-full text-xs font-medium transition-all border border-green-500/30"
+                        >
+                          <ThumbsUp size={12} />
+                          Yes
+                        </button>
+                        <button
+                          onClick={handleNoResponse}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-full text-xs font-medium transition-all border border-red-500/30"
+                        >
+                          <ThumbsDown size={12} />
+                          No
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
 

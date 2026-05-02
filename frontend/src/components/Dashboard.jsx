@@ -591,8 +591,8 @@ function PerformancePredictor({ onBack }) {
                     <div className="text-lg font-bold text-green-400">{result.scores.attendance}</div>
                   </div>
                   <div className="bg-white/5 rounded-xl p-3 text-center border border-white/10">
-                    <div className="text-xs text-gray-400 mb-1">Study</div>
-                    <div className="text-lg font-bold text-blue-400">{result.scores.study}</div>
+                    <div className="text-xs text-gray-400 mb-1">Study Hours</div>
+                    <div className="text-lg font-bold text-blue-400">{result.scores.study_hours || result.scores.study}</div>
                   </div>
                   <div className="bg-white/5 rounded-xl p-3 text-center border border-white/10">
                     <div className="text-xs text-gray-400 mb-1">Assignments</div>
