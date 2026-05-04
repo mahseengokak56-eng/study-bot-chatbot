@@ -130,25 +130,122 @@ const PandaAvatar3D = ({
     }, 500);
   };
 
+  // ========== COMPREHENSIVE KNOWLEDGE BASE ==========
+  const knowledgeBase = {
+    // Science
+    gravity: "Gravity is the force that pulls objects toward each other! 🌍 On Earth, it pulls everything toward the center, which is why things fall down. Sir Isaac Newton discovered gravity when he saw an apple fall from a tree! Cool, right?",
+    photosynthesis: "Photosynthesis is how plants make their food! 🌱 They use sunlight, water, and carbon dioxide to create glucose (sugar) and release oxygen. That's why plants are so important - they give us the air we breathe!",
+    atom: "Atoms are the tiny building blocks of everything around us! ⚛️ They're so small that millions can fit on the tip of a pin. Every element (like oxygen, carbon, gold) is made of its own type of atom!",
+    dna: "DNA is like the instruction manual for life! 🧬 It contains all the information about how living things grow, develop, and function. It's shaped like a twisted ladder called a double helix!",
+    evolution: "Evolution is how living things change over many generations! 🐒➡️👨 Nature selects the traits that help organisms survive better. That's why giraffes have long necks - to reach high leaves!",
+    
+    // Space
+    sun: "The Sun is a giant ball of hot gas (mostly hydrogen) that provides light and heat to our solar system! ☀️ It's about 93 million miles away and so big that 1.3 million Earths could fit inside it!",
+    moon: "The Moon is Earth's only natural satellite! 🌙 It takes about 27 days to orbit Earth, and its gravity causes our ocean tides. We can see it because it reflects sunlight!",
+    stars: "Stars are giant balls of glowing gas, mostly hydrogen and helium! ⭐ They shine because of nuclear fusion - converting hydrogen into helium and releasing huge amounts of energy!",
+    blackhole: "A black hole is a region in space where gravity is so strong that nothing, not even light, can escape! 🕳️ They form when massive stars collapse. The boundary is called the 'event horizon'!",
+    galaxy: "A galaxy is a massive collection of stars, gas, dust, and dark matter bound together by gravity! 🌌 Our Milky Way has about 100-400 billion stars!",
+    
+    // Math
+    pi: "Pi (π) is approximately 3.14159... and it's the ratio of a circle's circumference to its diameter! 🥧 It's an irrational number, meaning it goes on forever without repeating!",
+    pythagorean: "The Pythagorean theorem states that in a right triangle, a² + b² = c²! 📐 This means the square of the hypotenuse equals the sum of squares of the other two sides. Super useful!",
+    calculus: "Calculus is the mathematics of change! 📈 It has two main branches: derivatives (rates of change) and integrals (accumulation). Newton and Leibniz invented it independently!",
+    algebra: "Algebra uses symbols (usually letters like x and y) to represent unknown numbers! 🧮 It helps us solve equations and understand relationships between quantities!",
+    
+    // History
+    ww2: "World War II was a global conflict from 1939-1945 involving most of the world's nations! 🌍 It ended with the Allied victory and led to the formation of the United Nations and the beginning of the Cold War.",
+    industrial: "The Industrial Revolution (1760-1840) was when manufacturing shifted from hand production to machines! 🏭 It started in Britain and changed how people lived and worked forever!",
+    ancient: "Ancient civilizations like Egypt, Mesopotamia, India, China, and Greece laid the foundations for modern society! 🏛️ They invented writing, mathematics, laws, and architecture!",
+    renaissance: "The Renaissance (14th-17th century) was a 'rebirth' of art, science, and culture in Europe! 🎨 Figures like Leonardo da Vinci and Michelangelo changed how we see the world!",
+    
+    // Tech
+    ai: "Artificial Intelligence (AI) is when computers can perform tasks that normally require human intelligence! 🤖 Like recognizing speech, making decisions, or understanding language - just like me!",
+    internet: "The Internet is a global network of connected computers! 🌐 It started as ARPANET in 1969 and now connects billions of devices worldwide, letting us share information instantly!",
+    computer: "A computer is an electronic device that processes data using instructions called programs! 💻 Modern computers use binary (0s and 1s) to represent all information!",
+    programming: "Programming is writing instructions (code) that computers can understand and execute! 👨‍💻 Different languages (Python, JavaScript, C++) are like different human languages for computers!",
+    
+    // Nature
+    rainbow: "Rainbows form when sunlight passes through water droplets and bends (refracts)! 🌈 The light splits into 7 colors: red, orange, yellow, green, blue, indigo, and violet!",
+    earthquake: "Earthquakes happen when tectonic plates suddenly move or release energy! 🌍 The point underground where it starts is called the focus, and we measure strength on the Richter scale!",
+    volcano: "Volcanoes are openings in Earth's crust where molten rock (magma), ash, and gases erupt! 🌋 Some are active (erupt often), dormant (sleeping), or extinct (dead forever)!",
+    ocean: "Oceans cover about 71% of Earth's surface! 🌊 The Pacific is the largest and deepest. Oceans regulate climate, provide food, and are home to incredible marine life!",
+    
+    // General
+    time: "Time is the ongoing sequence of events! ⏰ We measure it in seconds, minutes, hours, days. Einstein showed that time is relative - it can speed up or slow down depending on gravity and speed!",
+    money: "Money is a medium of exchange that lets people trade goods and services! 💰 It started as bartering, then coins, then paper money. Now we also have digital currencies!",
+    love: "Love is a complex emotion involving care, affection, and attachment! ❤️ Scientists study it as chemicals in the brain (dopamine, oxytocin), but poets and philosophers have explored it for centuries!",
+    happiness: "Happiness is a state of well-being and contentment! 😊 Psychologists say it's about: positive emotions + engagement + relationships + meaning + accomplishment!",
+    success: "Success means different things to different people! 🏆 For some it's wealth, for others it's happiness, relationships, or making a difference. The key is defining it for yourself!",
+    education: "Education is the process of gaining knowledge, skills, values, and habits! 📚 It happens in schools, but also through experience, reading, and lifelong learning!",
+    dream: "Dreams are stories and images our minds create while we sleep! 💭 Scientists think they help process emotions and memories. Some people can control dreams - that's called lucid dreaming!",
+    
+    // Philosophy/Deep
+    meaning: "The meaning of life is a question humans have asked forever! 🤔 Some find it in happiness, others in helping others, creating, or understanding the universe. What gives YOUR life meaning?",
+    existence: "Existence is the state of being real and present in the world! 🌟 Philosophers debate why anything exists at all. Science explains how, but 'why' remains one of life's biggest mysteries!",
+    consciousness: "Consciousness is being aware of yourself and your surroundings! 🧠 Scientists are still studying exactly how it works. It's what makes you YOU - your thoughts, feelings, and experiences!"
+  };
+
+  // Helper function to check if question is asking for knowledge
+  const findKnowledgeMatch = (msg) => {
+    const lowerMsg = msg.toLowerCase();
+    
+    // Check for direct matches
+    for (const [key, value] of Object.entries(knowledgeBase)) {
+      if (lowerMsg.includes(key)) return value;
+    }
+    
+    // Check for "what is/are" patterns
+    const whatIsMatch = lowerMsg.match(/what is (an? )?(\w+)/);
+    if (whatIsMatch) {
+      const word = whatIsMatch[2];
+      for (const [key, value] of Object.entries(knowledgeBase)) {
+        if (key.includes(word) || word.includes(key)) return value;
+      }
+    }
+    
+    // Check for "how does" patterns
+    if (lowerMsg.includes('how does') || lowerMsg.includes('how do')) {
+      for (const [key, value] of Object.entries(knowledgeBase)) {
+        if (lowerMsg.includes(key)) return value;
+      }
+    }
+    
+    return null;
+  };
+
   // Generate contextual, flowing conversation
   const generateContextualResponse = (userMsg) => {
     const lowerMsg = userMsg.toLowerCase();
     const currentStage = conversationStage;
 
-    // ========== HIGHEST PRIORITY: Identity & Basic Questions (always answer these!) ==========
-    
-    // Identity/Who are you questions - CRITICAL for human-like conversation!
+    // ========== STEP 1: Check for Knowledge Questions ==========
+    // Try to find a knowledge match for "what is X" questions
+    if (lowerMsg.startsWith('what is') || lowerMsg.startsWith('what are') || 
+        lowerMsg.startsWith('how does') || lowerMsg.startsWith('how do') ||
+        lowerMsg.startsWith('why is') || lowerMsg.startsWith('who is') ||
+        lowerMsg.startsWith('tell me about') || lowerMsg.startsWith('explain')) {
+      
+      const knowledge = findKnowledgeMatch(userMsg);
+      if (knowledge) {
+        return {
+          text: `${knowledge}\n\nIs there anything else you'd like to know? I love learning and sharing knowledge! 🎋`,
+          mood: 'excited',
+          nextStage: 'general_chat'
+        };
+      }
+    }
+
+    // ========== STEP 2: Identity & Basic Questions ==========
     if (lowerMsg.includes('who are you') || lowerMsg.includes('what are you') || 
         lowerMsg.includes('your name') || lowerMsg.includes('introduce yourself') ||
         lowerMsg.includes('tell me about yourself')) {
       return {
-        text: `Hi there! I'm Panda Buddy! 🐼 I'm your friendly AI study companion here on EduNova. I can help you with: generating study notes, creating quizzes, checking your stress levels, and just being someone to chat with when you need motivation! I love bamboo, naps, and helping students succeed. What brings you here today?`,
+        text: `Hi there! I'm Panda Buddy! 🐼 I'm your friendly AI study companion here on EduNova. I know about science, math, history, technology, and I can help you with: generating study notes, creating quizzes, checking stress levels, and having fun conversations! What would you like to explore today?`,
         mood: 'excited',
         nextStage: 'general_chat'
       };
     }
 
-    // How are you (asking Panda)
     if (lowerMsg.includes('how are you') || lowerMsg.includes('how do you do')) {
       return {
         text: `I'm doing great, thanks for asking! 🎋 I just had some virtual bamboo and I'm ready to help you learn! How about you? How are you feeling today?`,
@@ -157,67 +254,41 @@ const PandaAvatar3D = ({
       };
     }
 
-    // What can you do / capabilities
     if (lowerMsg.includes('what can you do') || lowerMsg.includes('your features') || 
         lowerMsg === 'what do you do' || lowerMsg === 'what can you do for me') {
       return {
-        text: `Great question! Here's what I can do for you: 📚✨\n\n1. **Generate Study Notes** - Just tell me any topic and I'll create comprehensive notes\n2. **Create Quizzes** - Test your knowledge with personalized quizzes\n3. **Stress Check** - Monitor your stress levels and get tips\n4. **Chat & Motivate** - I'm always here to encourage you!\n5. **Voice Chat** - Click the mic button to talk to me!\n\nWhat would you like to try first?`,
+        text: `I can do lots of things! 📚✨\n\n• Answer questions about science, math, history, tech\n• Generate study notes on any topic\n• Create personalized quizzes\n• Check your stress levels\n• Chat and motivate you\n• Voice conversations\n\nWhat interests you most?`,
         mood: 'excited',
         nextStage: 'offer_activity'
       };
     }
 
-    // ========== STAGE-SPECIFIC RESPONSES ==========
-    
-    // FIRST: Check for NEGATIVE responses (must check before positive!)
-    if (currentStage === 'ask_study_status') {
-      // Check for "not good", "didn't study", "nothing" etc FIRST
-      if (lowerMsg.includes('not good') || lowerMsg.includes('not well') || lowerMsg.includes('not fine') || 
-          lowerMsg.includes('didn\'t study') || lowerMsg.includes('did not study') || 
-          lowerMsg.includes('studied nothing') || lowerMsg.includes('nothing') ||
-          lowerMsg.includes('no progress') || lowerMsg.includes('wasted time')) {
+    // ========== STEP 3: Study Status & Emotional Check-ins ==========
+    if (currentStage === 'ask_study_status' || lowerMsg.includes('study') || lowerMsg.includes('going')) {
+      if (lowerMsg.includes('not good') || lowerMsg.includes('bad') || 
+          lowerMsg.includes('terrible') || lowerMsg.includes('didn\'t study') ||
+          lowerMsg.includes('studied nothing') || lowerMsg.includes('nothing')) {
         return {
-          text: `Oh no, I'm sorry to hear that! 😟 It's okay to have off days. Even pandas have lazy days where we just eat bamboo and nap! � Tomorrow is a fresh start. Would you like me to help you get back on track with some study tips or a fun quiz?`,
+          text: `Oh no, I'm sorry to hear that! 😟 It's okay to have off days. Even pandas have lazy days where we just eat bamboo and nap! 🎋 Tomorrow is a fresh start. Want to learn something fun to get back into the groove?`,
           mood: 'curious',
           nextStage: 'offer_help'
         };
       }
 
-      if (lowerMsg.includes('bad') || lowerMsg.includes('terrible') || lowerMsg.includes('awful') || 
-          lowerMsg.includes('worst') || lowerMsg.includes('hate') || lowerMsg.includes('suck')) {
-        return {
-          text: `Aww, that sounds really tough! 😔 But remember, every expert was once a beginner. Albert Einstein struggled in school too! What subject is giving you the hardest time? Let's tackle it together! 💪`,
-          mood: 'curious',
-          nextStage: 'offer_help'
-        };
-      }
-
-      if (lowerMsg.includes('struggling') || lowerMsg.includes('difficult') || lowerMsg.includes('hard') || 
-          lowerMsg.includes('tough') || lowerMsg.includes('challenging')) {
-        return {
-          text: `I understand, some days learning feels like climbing a mountain! 🏔️ But you know what? Every step counts, even the small ones. What topic are you finding difficult? I can break it down into simple pieces for you!`,
-          mood: 'curious',
-          nextStage: 'offer_help'
-        };
-      }
-
-      // THEN check for POSITIVE responses
       if (lowerMsg.includes('good') || lowerMsg.includes('great') || lowerMsg.includes('well') || 
-          lowerMsg.includes('fine') || lowerMsg.includes('awesome') || lowerMsg.includes('excellent') ||
-          lowerMsg.includes('amazing') || lowerMsg.includes('fantastic') || lowerMsg.includes('perfect')) {
+          lowerMsg.includes('awesome') || lowerMsg.includes('excellent')) {
         return {
-          text: `Oh that's wonderful to hear! 🎉 I'm so happy for you! Your hard work is paying off! What subject are you finding most interesting right now? Is it math, science, or something else?`,
+          text: `Oh that's wonderful! 🎉 I'm so happy for you! Your hard work is paying off! What subject are you enjoying most? Or would you like to explore something completely new?`,
           mood: 'excited',
-          nextStage: 'ask_subject'
+          nextStage: 'general_chat'
         };
       }
 
-      if (lowerMsg.includes('okay') || lowerMsg.includes('alright') || lowerMsg.includes('so-so') || 
-          lowerMsg.includes('decent') || lowerMsg.includes('not bad')) {
+      if (lowerMsg.includes('okay') || lowerMsg.includes('alright') || lowerMsg.includes('fine')) {
         return {
-          text: `I see, just an average day! That's totally normal. 🙂 Sometimes slow and steady wins the race! Maybe we can make it more exciting - would you like to try a quick quiz or learn something new?`,
+          text: `I see, just an average day! That's totally normal. 🙂 Maybe we can make it more exciting - want to learn something fascinating? Ask me about space, dinosaurs, or anything you're curious about!`,
           mood: 'happy',
-          nextStage: 'offer_activity'
+          nextStage: 'general_chat'
         };
       }
     }
@@ -319,6 +390,47 @@ const PandaAvatar3D = ({
       };
     }
 
+    // Topic-specific knowledge for common study subjects
+    if (lowerMsg.includes('physics') || lowerMsg.includes('newton') || lowerMsg.includes('force') || lowerMsg.includes('motion')) {
+      return {
+        text: `Physics is fascinating! 📐 Newton's three laws explain how objects move: (1) Objects stay at rest or motion unless acted on, (2) Force equals mass times acceleration, (3) Every action has an equal and opposite reaction! What physics topic interests you?`,
+        mood: 'excited',
+        nextStage: 'general_chat'
+      };
+    }
+
+    if (lowerMsg.includes('chemistry') || lowerMsg.includes('element') || lowerMsg.includes('periodic table') || lowerMsg.includes('molecule')) {
+      return {
+        text: `Chemistry is the study of matter and its changes! 🧪 Everything is made of elements from the periodic table. Water is H₂O (two hydrogen, one oxygen). What chemical mystery would you like to explore?`,
+        mood: 'excited',
+        nextStage: 'general_chat'
+      };
+    }
+
+    if (lowerMsg.includes('biology') || lowerMsg.includes('cell') || lowerMsg.includes('organism') || lowerMsg.includes('living')) {
+      return {
+        text: `Biology is the study of life! 🧬 From tiny bacteria to giant whales, all living things have cells, need energy, grow, reproduce, and respond to their environment. What aspect of life fascinates you?`,
+        mood: 'excited',
+        nextStage: 'general_chat'
+      };
+    }
+
+    if (lowerMsg.includes('history') || lowerMsg.includes('war') || lowerMsg.includes('ancient') || lowerMsg.includes('civilization')) {
+      return {
+        text: `History teaches us about our past! 📜 Ancient civilizations like Egypt built pyramids, Rome created roads and laws, and the Renaissance sparked art and science. Which era intrigues you most?`,
+        mood: 'curious',
+        nextStage: 'general_chat'
+      };
+    }
+
+    if (lowerMsg.includes('geography') || lowerMsg.includes('country') || lowerMsg.includes('continent') || lowerMsg.includes('map')) {
+      return {
+        text: `Geography explores our world! 🌍 There are 7 continents, 195 countries, and incredible diversity in landscapes, cultures, and climates. Did you know Russia spans 11 time zones? Which place interests you?`,
+        mood: 'happy',
+        nextStage: 'general_chat'
+      };
+    }
+
     // Tired or sleepy responses
     if (lowerMsg.includes('tired') || lowerMsg.includes('sleepy') || lowerMsg.includes('exhausted') || lowerMsg.includes('sleep')) {
       return {
@@ -367,15 +479,15 @@ const PandaAvatar3D = ({
     // Context-aware fallback responses based on conversation stage
     if (currentStage === 'ask_study_status') {
       return {
-        text: `Hmm, I see! 🤔 Everyone's study journey is different. Some days we learn a lot, some days we learn a little, and that's perfectly okay! The important thing is you're here and trying. What would help you right now - some study tips, a fun quiz, or just a friendly chat?`,
+        text: `I understand! 🤔 Everyone's study journey is different. Tell me - what subjects interest you? Or ask me anything you're curious about! I know about space, science, history, math, and more. What sparks your curiosity?`,
         mood: 'curious',
-        nextStage: 'offer_help'
+        nextStage: 'general_chat'
       };
     }
 
     if (currentStage === 'ask_subject') {
       return {
-        text: `That sounds interesting! 🎋 I'm curious to know more about what you're learning. Is there a particular topic or subject that's on your mind today? I can help explain things or create study materials for you!`,
+        text: `That sounds interesting! 🎋 Tell me more, or ask me a question! I can explain: photosynthesis, black holes, WWII, calculus basics, how the internet works... What topic catches your attention?`,
         mood: 'curious',
         nextStage: 'general_chat'
       };
@@ -383,15 +495,24 @@ const PandaAvatar3D = ({
 
     if (currentStage === 'offer_help' || currentStage === 'offer_activity') {
       return {
-        text: `I really want to help you! 🐼💕 I can generate detailed study notes on any topic, create a personalized quiz to test your knowledge, or we can just chat about your day. What would make you feel most supported right now?`,
+        text: `I'm here to help! 🐼 You can:\n\n• Ask me "What is gravity?" or "How does photosynthesis work?"\n• Say "Generate notes on [topic]"\n• Request "Quiz me on [subject]"\n• Just chat about your day!\n\nWhat would you like to do?`,
         mood: 'happy',
         nextStage: 'general_chat'
       };
     }
 
-    // General fallback - more personal and encouraging
+    // SMART FALLBACK: Handle questions intelligently even without exact matches
+    if (lowerMsg.endsWith('?') || lowerMsg.includes('why') || lowerMsg.includes('how') || lowerMsg.includes('what')) {
+      return {
+        text: `That's a great question! 🎋 While I don't have a specific answer for that in my knowledge base, I'd love to help you explore it! Try asking me about:\n\n• Science: gravity, atoms, DNA, evolution\n• Space: sun, moon, stars, black holes\n• Math: pi, algebra, calculus\n• History: WWII, Industrial Revolution, Ancient civilizations\n• Tech: AI, internet, programming\n\nOr type "Generate notes on [your topic]" and I'll create detailed study materials! What would you like to explore?`,
+        mood: 'curious',
+        nextStage: 'general_chat'
+      };
+    }
+
+    // General engaging fallback
     return {
-      text: `Thanks for sharing that with me! 🎋 I enjoy our conversations. You know, learning is not just about studying - it's also about taking care of yourself. How are you feeling today? And is there anything specific I can help you with?`,
+      text: `Interesting! 🐼💭 I'm always curious to learn more. Tell me - is there something specific you'd like to know? Ask me about science, space, history, or say "What can you do?" to see all my features!`,
       mood: 'happy',
       nextStage: 'general_chat'
     };
