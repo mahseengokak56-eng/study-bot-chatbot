@@ -321,6 +321,36 @@ const PandaAvatar3D = ({
       };
     }
 
+    // Identity/Who are you questions - CRITICAL for human-like conversation!
+    if (lowerMsg.includes('who are you') || lowerMsg.includes('what are you') || 
+        lowerMsg.includes('your name') || lowerMsg.includes('introduce yourself') ||
+        lowerMsg.includes('what do you do') || lowerMsg.includes('tell me about yourself')) {
+      return {
+        text: `Hi there! I'm Panda Buddy! 🐼 I'm your friendly AI study companion here on EduNova. I can help you with: generating study notes, creating quizzes, checking your stress levels, and just being someone to chat with when you need motivation! I love bamboo, naps, and helping students succeed. What brings you here today?`,
+        mood: 'excited',
+        nextStage: 'general_chat'
+      };
+    }
+
+    // How are you (asking Panda)
+    if (lowerMsg.includes('how are you') || lowerMsg.includes('how do you do')) {
+      return {
+        text: `I'm doing great, thanks for asking! 🎋 I just had some virtual bamboo and I'm ready to help you learn! How about you? How are you feeling today?`,
+        mood: 'happy',
+        nextStage: 'ask_user_status'
+      };
+    }
+
+    // What can you do / capabilities
+    if (lowerMsg.includes('what can you do') || lowerMsg.includes('help me with') || 
+        lowerMsg.includes('your features') || lowerMsg.includes('what do you do')) {
+      return {
+        text: `Great question! Here's what I can do for you: 📚✨\n\n1. **Generate Study Notes** - Just tell me any topic and I'll create comprehensive notes\n2. **Create Quizzes** - Test your knowledge with personalized quizzes\n3. **Stress Check** - Monitor your stress levels and get tips\n4. **Chat & Motivate** - I'm always here to encourage you!\n5. **Voice Chat** - Click the mic button to talk to me!\n\nWhat would you like to try first?`,
+        mood: 'excited',
+        nextStage: 'offer_activity'
+      };
+    }
+
     // Bye/Goodbye responses
     if (lowerMsg.includes('bye') || lowerMsg.includes('goodbye') || lowerMsg.includes('see you') || lowerMsg.includes('later')) {
       return {
