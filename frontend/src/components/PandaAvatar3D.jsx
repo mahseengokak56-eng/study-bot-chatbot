@@ -135,27 +135,53 @@ const PandaAvatar3D = ({
     const lowerMsg = userMsg.toLowerCase();
     const currentStage = conversationStage;
 
-    // Greeting/Study status responses
-    if (currentStage === 'ask_study_status' || lowerMsg.includes('going') || lowerMsg.includes('study')) {
-      if (lowerMsg.includes('good') || lowerMsg.includes('great') || lowerMsg.includes('well') || lowerMsg.includes('fine') || lowerMsg.includes('awesome') || lowerMsg.includes('excellent')) {
+    // FIRST: Check for NEGATIVE responses (must check before positive!)
+    if (currentStage === 'ask_study_status') {
+      // Check for "not good", "didn't study", "nothing" etc FIRST
+      if (lowerMsg.includes('not good') || lowerMsg.includes('not well') || lowerMsg.includes('not fine') || 
+          lowerMsg.includes('didn\'t study') || lowerMsg.includes('did not study') || 
+          lowerMsg.includes('studied nothing') || lowerMsg.includes('nothing') ||
+          lowerMsg.includes('no progress') || lowerMsg.includes('wasted time')) {
         return {
-          text: `Oh that's wonderful to hear! 🎉 I'm so happy for you! What subject are you finding most interesting right now? Is it math, science, or something else?`,
-          mood: 'excited',
-          nextStage: 'ask_subject'
-        };
-      }
-      
-      if (lowerMsg.includes('bad') || lowerMsg.includes('not good') || lowerMsg.includes('struggling') || lowerMsg.includes('difficult') || lowerMsg.includes('hard')) {
-        return {
-          text: `Aww, I'm sorry to hear that! 😟 Don't worry though - even the smartest people struggled when they were learning. Which subject is giving you trouble? I can help explain it in a simple way!`,
+          text: `Oh no, I'm sorry to hear that! 😟 It's okay to have off days. Even pandas have lazy days where we just eat bamboo and nap! � Tomorrow is a fresh start. Would you like me to help you get back on track with some study tips or a fun quiz?`,
           mood: 'curious',
           nextStage: 'offer_help'
         };
       }
 
-      if (lowerMsg.includes('okay') || lowerMsg.includes('alright') || lowerMsg.includes('so-so')) {
+      if (lowerMsg.includes('bad') || lowerMsg.includes('terrible') || lowerMsg.includes('awful') || 
+          lowerMsg.includes('worst') || lowerMsg.includes('hate') || lowerMsg.includes('suck')) {
         return {
-          text: `I see, just an average day! That's totally normal. 🙂 Maybe we can make it more exciting - would you like to try a quick quiz or learn something new?`,
+          text: `Aww, that sounds really tough! 😔 But remember, every expert was once a beginner. Albert Einstein struggled in school too! What subject is giving you the hardest time? Let's tackle it together! 💪`,
+          mood: 'curious',
+          nextStage: 'offer_help'
+        };
+      }
+
+      if (lowerMsg.includes('struggling') || lowerMsg.includes('difficult') || lowerMsg.includes('hard') || 
+          lowerMsg.includes('tough') || lowerMsg.includes('challenging')) {
+        return {
+          text: `I understand, some days learning feels like climbing a mountain! 🏔️ But you know what? Every step counts, even the small ones. What topic are you finding difficult? I can break it down into simple pieces for you!`,
+          mood: 'curious',
+          nextStage: 'offer_help'
+        };
+      }
+
+      // THEN check for POSITIVE responses
+      if (lowerMsg.includes('good') || lowerMsg.includes('great') || lowerMsg.includes('well') || 
+          lowerMsg.includes('fine') || lowerMsg.includes('awesome') || lowerMsg.includes('excellent') ||
+          lowerMsg.includes('amazing') || lowerMsg.includes('fantastic') || lowerMsg.includes('perfect')) {
+        return {
+          text: `Oh that's wonderful to hear! 🎉 I'm so happy for you! Your hard work is paying off! What subject are you finding most interesting right now? Is it math, science, or something else?`,
+          mood: 'excited',
+          nextStage: 'ask_subject'
+        };
+      }
+
+      if (lowerMsg.includes('okay') || lowerMsg.includes('alright') || lowerMsg.includes('so-so') || 
+          lowerMsg.includes('decent') || lowerMsg.includes('not bad')) {
+        return {
+          text: `I see, just an average day! That's totally normal. 🙂 Sometimes slow and steady wins the race! Maybe we can make it more exciting - would you like to try a quick quiz or learn something new?`,
           mood: 'happy',
           nextStage: 'offer_activity'
         };
@@ -304,10 +330,35 @@ const PandaAvatar3D = ({
       };
     }
 
-    // Continue conversation with follow-up
+    // Context-aware fallback responses based on conversation stage
+    if (currentStage === 'ask_study_status') {
+      return {
+        text: `Hmm, I see! 🤔 Everyone's study journey is different. Some days we learn a lot, some days we learn a little, and that's perfectly okay! The important thing is you're here and trying. What would help you right now - some study tips, a fun quiz, or just a friendly chat?`,
+        mood: 'curious',
+        nextStage: 'offer_help'
+      };
+    }
+
+    if (currentStage === 'ask_subject') {
+      return {
+        text: `That sounds interesting! 🎋 I'm curious to know more about what you're learning. Is there a particular topic or subject that's on your mind today? I can help explain things or create study materials for you!`,
+        mood: 'curious',
+        nextStage: 'general_chat'
+      };
+    }
+
+    if (currentStage === 'offer_help' || currentStage === 'offer_activity') {
+      return {
+        text: `I really want to help you! 🐼💕 I can generate detailed study notes on any topic, create a personalized quiz to test your knowledge, or we can just chat about your day. What would make you feel most supported right now?`,
+        mood: 'happy',
+        nextStage: 'general_chat'
+      };
+    }
+
+    // General fallback - more personal and encouraging
     return {
-      text: `That's interesting! 🎋 Tell me more about that. Or if you'd like, we can generate some study materials, try a quiz, or just keep chatting. What sounds good to you?`,
-      mood: 'curious',
+      text: `Thanks for sharing that with me! 🎋 I enjoy our conversations. You know, learning is not just about studying - it's also about taking care of yourself. How are you feeling today? And is there anything specific I can help you with?`,
+      mood: 'happy',
       nextStage: 'general_chat'
     };
   };
