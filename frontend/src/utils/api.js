@@ -109,12 +109,31 @@ export const isAuthenticated = () => {
   return !!localStorage.getItem('token');
 };
 
-export const sendChatMessage = async (message, attachments = {}) => {
+export const sendChatMessage = async (message, attachments = {}, conversationHistory = []) => {
   const { image, file } = attachments;
-  const payload = { message };
+  const payload = {
+    message,
+    conversation_history: conversationHistory.slice(-8).map(m => ({
+      role: m.role,
+      content: m.content,
+    })),
+  };
   if (image) payload.has_image = true;
   if (file) payload.has_file = true;
   const response = await api.post('/api/chat', payload);
+  return response.data;
+};
+
+export const sendPandaMessage = async (message, context = {}, conversationHistory = []) => {
+  const payload = {
+    message,
+    context,
+    conversation_history: conversationHistory.slice(-4).map(m => ({
+      role: m.role,
+      content: m.content,
+    })),
+  };
+  const response = await api.post('/api/panda-chat', payload);
   return response.data;
 };
 

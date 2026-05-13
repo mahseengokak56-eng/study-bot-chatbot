@@ -45,7 +45,7 @@ from backend.db.db import (
 # ── Optional LLM support ────────────────────────────────────────────────────
 try:
     from langchain_groq import ChatGroq
-    from langchain_core.messages import HumanMessage, SystemMessage
+    from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
     LLM_AVAILABLE = True
 except ImportError:
     LLM_AVAILABLE = False
@@ -132,15 +132,88 @@ I can help you with:
 What would you like help with today?"""
 }
 
+# ── PandaBuddy AI Persona ────────────────────────────────────────────────────
+PANDA_SYSTEM_PROMPT = """You are PandaBuddy, a warm, witty, emotionally intelligent AI study companion for EduNova — a student productivity platform. You help students with academic questions, stress management, motivation, and study strategies.
+
+Your personality:
+- Warm, encouraging, and genuinely caring about student wellbeing
+- Knowledgeable across all academic subjects (STEM, humanities, languages, coding)
+- Empathetic — you pick up on emotional cues and respond accordingly
+- Concise but thorough — you never leave a student confused
+- You use emojis naturally (not excessively)
+
+Your rules:
+- NEVER give generic, repetitive, or robotic responses
+- Always tailor your answer to the specific question asked
+- If stressed/overwhelmed: acknowledge feelings FIRST, then help
+- If excited: match their energy
+- For academic questions: explain clearly with a concrete example
+- For stress/motivation: empathize first, then give ONE concrete action
+- Start with a direct response — never with "Of course!" or "Certainly!"
+- Use "you" language, not "students" or "one should"
+- End with a soft follow-up question OR a proactive feature suggestion (quiz, notes, stress check)"""
+
+
+def detect_mood(message: str, category: str) -> str:
+    """Detect user emotional state from message text and ML category."""
+    msg_lower = message.lower()
+    stress_signals = ['stressed', 'stress', 'overwhelmed', 'tired', 'exhausted',
+                      'burned out', 'cant do', "can't do", 'help me', 'failing']
+    frustrated_signals = ['frustrated', 'confused', "don't understand", "dont understand",
+                          'stuck', 'lost', 'not working', 'doesnt work', "doesn't work"]
+    excited_signals = ['excited', 'amazing', 'great', 'awesome', 'love', 'perfect',
+                       'excellent', 'wow', 'cool', 'brilliant']
+    if category == 'stress' or any(s in msg_lower for s in stress_signals):
+        return 'stressed'
+    if any(s in msg_lower for s in frustrated_signals):
+        return 'frustrated'
+    if any(s in msg_lower for s in excited_signals):
+        return 'excited'
+    if category == 'motivation':
+        return 'unmotivated'
+    if category == 'academic':
+        return 'learning'
+    return 'neutral'
+
+
+def build_system_prompt(category: str, mood: str) -> str:
+    """Build a rich contextual system prompt for the main chat."""
+    mood_guide = {
+        'stressed':    'Lead with empathy and reassurance. Keep the response calming.',
+        'frustrated':  'Be extra patient. Break things down step-by-step. Validate their struggle.',
+        'excited':     'Match their energy! Be upbeat and thorough.',
+        'unmotivated': 'Be encouraging. Highlight their potential and give one small concrete step.',
+        'learning':    'Be educational and precise. Use examples. Offer to go deeper.',
+        'neutral':     'Respond naturally and helpfully.',
+    }
+    cat_guide = {
+        'academic':   'Explain the concept clearly with a real-world example. Structure logically.',
+        'stress':     'Focus on wellbeing first. Offer specific, actionable coping techniques.',
+        'motivation': 'Reframe the challenge positively. Share an inspiring perspective.',
+        'tips':       'Give specific, actionable study techniques. Make them immediately usable.',
+        'general':    'Respond conversationally and helpfully.',
+    }
+    return (
+        f"{PANDA_SYSTEM_PROMPT}\n\n"
+        f"ML-detected category: {category.upper()}\n"
+        f"Student mood: {mood.upper()}\n"
+        f"Mood guidance: {mood_guide.get(mood, mood_guide['neutral'])}\n"
+        f"Category guidance: {cat_guide.get(category, cat_guide['general'])}\n\n"
+        "Conversation history is provided above. Be coherent and never repeat yourself."
+    )
+
+
 # ── Pydantic Models ───────────────────────────────────────────────────────────
 class ChatRequest(BaseModel):
-    message: str = Field(..., min_length=1, max_length=1000)
-    use_llm: bool = Field(default=False, description="Enhance response with LLM if available")
+    message: str = Field(..., min_length=1, max_length=2000)
+    use_llm: bool = Field(default=True, description="Use LLM for response")
+    conversation_history: List[dict] = Field(default=[], description="Previous messages for context")
 
 
 class ChatResponse(BaseModel):
     response: str
     predicted_category: str
+    mood: str
     timestamp: str
 
 
@@ -266,61 +339,57 @@ async def chat(
     current_user: TokenData = Depends(get_current_user)
 ):
     """
-    Process a chat message:
-    1. Predict category using ML
-    2. Generate response based on category
-    3. Optionally enhance with LLM
-    4. Save to database
+    Process a chat message with conversational memory and emotional intelligence:
+    1. ML category prediction
+    2. Mood detection
+    3. LLM response with full conversation history
+    4. Fallback to category templates
+    5. Save to database
     """
     user_message = request.message.strip()
 
-    # Step 1: ML Prediction
+    # Step 1: ML Category Prediction
     try:
         predicted_category = predict_category(user_message)
     except Exception as e:
         print(f"ML prediction error: {e}")
         predicted_category = "general"
 
-    # Step 2: Generate base response
-    base_response = CATEGORY_RESPONSES.get(
-        predicted_category,
-        CATEGORY_RESPONSES["general"]
-    )
+    # Step 2: Detect emotional mood
+    mood = detect_mood(user_message, predicted_category)
 
-    # Step 3: Generate intelligent response with LLM
+    # Step 3: Build LLM response with conversation memory
     response = ""
     if llm is not None:
         try:
-            system_msg = f"""You are EduNova AI, an intelligent and friendly educational assistant. 
-The user's query was categorized by our ML system as: {predicted_category.upper()}.
+            system_content = build_system_prompt(predicted_category, mood)
 
-Provide a helpful, comprehensive, and accurate response to the user's question. 
-Be conversational, encouraging, and educational. Answer the question directly 
-with specific information, not generic advice.
+            # Reconstruct conversation history for the LLM
+            history_messages = []
+            for msg in request.conversation_history[-8:]:
+                role = msg.get("role", "")
+                content = msg.get("content", "")
+                if not content:
+                    continue
+                if role == "user":
+                    history_messages.append(HumanMessage(content=content))
+                elif role in ("bot", "assistant"):
+                    history_messages.append(AIMessage(content=content))
 
-If the question is academic, explain concepts clearly with examples.
-If it's about stress, provide empathy and practical coping strategies.
-If it's about motivation, be encouraging and inspiring.
-If it's about study tips, give specific actionable techniques.
-
-Keep responses informative but concise (3-5 paragraphs)."""
-
-            messages = [
-                SystemMessage(content=system_msg),
-                HumanMessage(content=user_message)
-            ]
+            messages = (
+                [SystemMessage(content=system_content)]
+                + history_messages
+                + [HumanMessage(content=user_message)]
+            )
             llm_response = llm.invoke(messages)
             if llm_response and llm_response.content:
                 response = llm_response.content
         except Exception as e:
-            print(f"LLM enhancement failed: {e}")
-    
-    # Fall back to category template if LLM not available or failed
+            print(f"LLM error: {e}")
+
+    # Fallback to category template
     if not response:
-        response = CATEGORY_RESPONSES.get(
-            predicted_category,
-            CATEGORY_RESPONSES["general"]
-        )
+        response = CATEGORY_RESPONSES.get(predicted_category, CATEGORY_RESPONSES["general"])
 
     # Step 4: Save to database
     try:
@@ -332,11 +401,11 @@ Keep responses informative but concise (3-5 paragraphs)."""
         )
     except Exception as e:
         print(f"Failed to save chat: {e}")
-        # Don't fail the request if saving fails
 
     return ChatResponse(
         response=response,
         predicted_category=predicted_category,
+        mood=mood,
         timestamp=datetime.utcnow().isoformat()
     )
 
@@ -362,6 +431,136 @@ async def get_stats(current_user: TokenData = Depends(get_current_user)):
         return stats
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch stats: {str(e)}")
+
+
+# ── PandaBuddy Widget Chat ────────────────────────────────────────────────────
+class PandaChatRequest(BaseModel):
+    message: str = Field(..., min_length=1, max_length=500)
+    context: dict = Field(default={}, description="User context: current_view, quiz_score, stress_level, recent_topics")
+    conversation_history: List[dict] = Field(default=[], description="Recent widget conversation pairs")
+
+
+class PandaChatResponse(BaseModel):
+    response: str
+    mood: str
+    suggested_action: Optional[str] = None
+    timestamp: str
+
+
+@app.post("/api/panda-chat", response_model=PandaChatResponse)
+async def panda_chat(
+    request: PandaChatRequest,
+    current_user: TokenData = Depends(get_current_user)
+):
+    """PandaBuddy widget endpoint — short, empathetic, context-aware responses."""
+    user_message = request.message.strip()
+    context = request.context
+
+    # ML category + mood
+    try:
+        predicted_category = predict_category(user_message)
+    except Exception:
+        predicted_category = "general"
+    mood = detect_mood(user_message, predicted_category)
+
+    # Pull personalization data
+    stress_ctx = ""
+    quiz_ctx = ""
+    topic_ctx = ""
+
+    try:
+        quiz_stats = get_quiz_stats(current_user.user_id)
+        total = quiz_stats.get("total_quizzes", 0)
+        if total > 0:
+            avg = quiz_stats.get("average_percentage", 0)
+            if avg < 50:
+                quiz_ctx = f"Student's quiz average is {avg:.0f}% — needs more practice."
+            elif avg >= 80:
+                quiz_ctx = f"Student is excelling with a {avg:.0f}% quiz average!"
+            else:
+                quiz_ctx = f"Student has a steady {avg:.0f}% quiz average."
+    except Exception:
+        pass
+
+    sl = context.get("stress_level")
+    if sl == "High":
+        stress_ctx = "Student's stress level is currently HIGH."
+    elif sl == "Low":
+        stress_ctx = "Student's stress level is LOW — great learning state."
+
+    topics = context.get("recent_topics", [])
+    if topics:
+        topic_ctx = f"Recently studied: {', '.join(topics[:3])}."
+    if context.get("current_view"):
+        topic_ctx += f" Currently in: {context['current_view']} section."
+
+    response = ""
+    suggested_action = None
+
+    if llm is not None:
+        try:
+            panda_prompt = (
+                f"{PANDA_SYSTEM_PROMPT}\n\n"
+                f"Student data:\n{stress_ctx}\n{quiz_ctx}\n{topic_ctx}\n\n"
+                "IMPORTANT: This is the PandaBuddy widget — keep your response SHORT "
+                "(2-4 sentences). Be warm, direct, and end with ONE specific suggestion."
+            )
+            history_msgs = []
+            for msg in request.conversation_history[-4:]:
+                role = msg.get("role", "")
+                content = msg.get("content", "")
+                if not content:
+                    continue
+                if role == "user":
+                    history_msgs.append(HumanMessage(content=content))
+                elif role in ("bot", "assistant"):
+                    history_msgs.append(AIMessage(content=content))
+
+            messages = (
+                [SystemMessage(content=panda_prompt)]
+                + history_msgs
+                + [HumanMessage(content=user_message)]
+            )
+            llm_resp = llm.invoke(messages)
+            if llm_resp and llm_resp.content:
+                response = llm_resp.content
+                rl = response.lower()
+                if "quiz" in rl:
+                    suggested_action = "quiz"
+                elif "note" in rl:
+                    suggested_action = "notes"
+                elif "stress" in rl or "break" in rl:
+                    suggested_action = "stress"
+        except Exception as e:
+            print(f"PandaBuddy LLM error: {e}")
+
+    if not response:
+        fallbacks = {
+            "stressed":    "Hey, I can see things feel heavy right now — that's completely valid. 💙 Take one slow breath with me. You've handled challenges before. Want to try a quick stress check?",
+            "frustrated":  "Confusion is literally just the feeling of learning something new — seriously! 🌱 Let's break this down together. What part feels most unclear?",
+            "learning":    "Great question! 🎯 The key is breaking this into smaller pieces and connecting it to what you already know. Want me to generate notes on this topic?",
+            "excited":     "Love the energy! 🚀 You're in a great mindset to learn. Let's make the most of it — want a quick quiz to lock this in?",
+            "unmotivated": "Even showing up today counts as progress — seriously. 💪 What's one tiny thing we can tackle together right now?",
+            "neutral":     "I'm here and ready to help! 🐼 What would you like to explore or work on today?",
+        }
+        response = fallbacks.get(mood, fallbacks["neutral"])
+
+    try:
+        save_chat(
+            user_id=current_user.user_id,
+            message=f"[Widget] {user_message}",
+            response=response,
+            category=predicted_category
+        )
+    except Exception:
+        pass
+
+    return PandaChatResponse(
+        response=response,
+        mood=mood,
+        suggested_action=suggested_action,
+        timestamp=datetime.utcnow().isoformat()
+    )
 
 
 # ── NEW: Stress Prediction API ─────────────────────────────────────────────────
