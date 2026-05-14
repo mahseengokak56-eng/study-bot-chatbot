@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, X, Mic, MicOff, Sparkles } from 'lucide-react';
-import { getCurrentUser } from '../utils/api';
+import { getCurrentUser, api } from '../utils/api';
 
 const PandaAvatar3D = ({ 
   currentView, 
@@ -46,7 +46,8 @@ const PandaAvatar3D = ({
       recognitionRef.current.onerror = (event) => {
         console.error('Speech recognition error', event.error);
         setIsListening(false);
-        setPandaMood('happy');
+        setIsTyping(true);
+        setPandaMood('curious');
         typeMessage("Oops! I didn't catch that. Could you try speaking again or type your message? 🐼", 'happy');
       };
 
@@ -67,6 +68,8 @@ const PandaAvatar3D = ({
       else greeting = 'Good evening';
       
       const initialMsg = `${greeting}, ${currentUser?.name || 'friend'}! 🐼 I'm Panda, your study buddy! How is your study going today?`;
+      setIsTyping(true);
+      setPandaMood('curious');
       typeMessage(initialMsg, 'happy');
       setConversationStage('ask_study_status');
     }
@@ -75,6 +78,8 @@ const PandaAvatar3D = ({
   // Toggle voice recognition
   const toggleVoiceInput = () => {
     if (!recognitionRef.current) {
+      setIsTyping(true);
+      setPandaMood('curious');
       typeMessage("Sorry, voice input is not supported in your browser. Please type instead! 🐾", 'sleepy');
       return;
     }
@@ -93,41 +98,64 @@ const PandaAvatar3D = ({
 
   // Typewriter effect
   const typeMessage = (message, mood = 'happy') => {
-    setIsTyping(true);
-    setPandaMood('curious');
     setCurrentMessage('');
     let index = 0;
     
     const interval = setInterval(() => {
       if (index <= message.length) {
         setCurrentMessage(message.slice(0, index));
-        index++;
+        index += 2;  // faster typing
       } else {
         clearInterval(interval);
         setIsTyping(false);
         setPandaMood(mood);
         setMessages(prev => [...prev, { text: message, sender: 'panda', mood, timestamp: Date.now() }]);
       }
-    }, 30);
+    }, 8);
     
     return () => clearInterval(interval);
   };
 
-  // Handle user sending message
-  const handleUserSend = (messageText) => {
-    const text = messageText || userInput;
-    if (!text.trim()) return;
-    
-    const userMessage = text.trim();
-    setMessages(prev => [...prev, { text: userMessage, sender: 'user', timestamp: Date.now() }]);
+  // Handle user sending message — LLM first, rule-based fallback
+  const handleUserSend = async (messageText) => {
+    const text = (messageText !== undefined ? messageText : userInput).trim();
+    if (!text || isTyping) return;
+
+    setMessages(prev => [...prev, { text, sender: 'user', timestamp: Date.now() }]);
     setUserInput('');
-    
-    // Generate contextual response based on conversation stage
-    setTimeout(() => {
-      const response = generateContextualResponse(userMessage);
-      typeMessage(response.text, response.mood);
-      setConversationStage(response.nextStage);
-    }, 500);
+    setIsTyping(true);
+    setPandaMood('curious');
+    setCurrentMessage('');
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) throw new Error('no token');
+
+      const result = await api.post('/api/panda-chat', {
+        message: text,
+        context: {
+          current_view: currentView,
+          quiz_score: quizScore,
+          stress_level: stressLevel,
+          recent_topics: recentTopics,
+          chat_count: chatCount,
+        },
+        conversation_history: messages.slice(-6).map(m => ({
+          role: m.sender === 'user' ? 'user' : 'bot',
+          content: m.text,
+        })),
+      }, { timeout: 8000 });
+
+      const reply = result.data?.response || "I'm here to help! What would you like to know? \uD83D\uDC3C";
+      setIsTyping(false);
+      typeMessage(reply, 'happy');
+    } catch (err) {
+      console.warn('PandaBuddy LLM unavailable, using fallback:', err.message);
+      setIsTyping(false);
+      const fb = generateContextualResponse(text);
+      typeMessage(fb.text, fb.mood);
+      setConversationStage(fb.nextStage);
+    }
   };
 
   // ========== COMPREHENSIVE KNOWLEDGE BASE ==========
@@ -807,11 +835,8 @@ const PandaAvatar3D = ({
                 {['Going good!', 'Need help', 'Feeling tired', 'Quiz me!', 'Generate notes'].map((suggestion) => (
                   <button
                     key={suggestion}
-                    onClick={() => {
-                      setUserInput(suggestion);
-                      setTimeout(() => handleUserSend(suggestion), 100);
-                    }}
-                    disabled={isListening}
+                    onClick={() => handleUserSend(suggestion)}
+                    disabled={isListening || isTyping}
                     className="px-3 py-1 bg-white/5 hover:bg-white/10 rounded-full text-xs text-gemini-muted transition-colors border border-white/5 disabled:opacity-50"
                   >
                     {suggestion}
