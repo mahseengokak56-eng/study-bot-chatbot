@@ -216,6 +216,8 @@ class ChatResponse(BaseModel):
     predicted_category: str
     mood: str
     timestamp: str
+    is_confused: bool = False
+    confusion_confidence: float = 0.0
 
 
 class UserProfile(BaseModel):
@@ -359,11 +361,29 @@ async def chat(
     # Step 2: Detect emotional mood
     mood = detect_mood(user_message, predicted_category)
 
-    # Step 3: Build LLM response with conversation memory
+    # Step 3: Confusion Detection
+    confusion_pred = confusion_engine.predict(user_message)
+    is_confused = confusion_pred["is_confused"]
+    confusion_conf = confusion_pred["confidence"]
+    
+    # Save confusion prediction
+    try:
+        save_confusion_prediction(
+            user_id=current_user.user_id, 
+            message=user_message, 
+            is_confused=is_confused, 
+            confidence=confusion_conf
+        )
+    except Exception as e:
+        print(f"Failed to save confusion prediction: {e}")
+
+    # Step 4: Build LLM response with conversation memory
     response = ""
     if llm is not None:
         try:
             system_content = build_system_prompt(predicted_category, mood)
+            if is_confused:
+                system_content += "\n\n[SYSTEM INSTRUCTION: THE STUDENT IS CONFUSED. Provide a simpler, step-by-step explanation. Be highly supportive and reassuring.]"
 
             # Reconstruct conversation history for the LLM
             history_messages = []
@@ -407,7 +427,9 @@ async def chat(
         response=response,
         predicted_category=predicted_category,
         mood=mood,
-        timestamp=datetime.utcnow().isoformat()
+        timestamp=datetime.utcnow().isoformat(),
+        is_confused=is_confused,
+        confusion_confidence=confusion_conf
     )
 
 
@@ -446,8 +468,6 @@ class PandaChatResponse(BaseModel):
     mood: str
     suggested_action: Optional[str] = None
     timestamp: str
-    is_confused: bool = False
-    confusion_confidence: float = 0.0
 
 
 @app.post("/api/panda-chat", response_model=PandaChatResponse)
@@ -466,21 +486,7 @@ async def panda_chat(
         predicted_category = "general"
     mood = detect_mood(user_message, predicted_category)
 
-    # Confusion Detection
-    confusion_pred = confusion_engine.predict(user_message)
-    is_confused = confusion_pred["is_confused"]
-    confusion_conf = confusion_pred["confidence"]
-    
-    # Save confusion prediction
-    try:
-        save_confusion_prediction(
-            user_id=current_user.user_id, 
-            message=user_message, 
-            is_confused=is_confused, 
-            confidence=confusion_conf
-        )
-    except Exception as e:
-        print(f"Failed to save confusion prediction: {e}")
+    # Removed confusion logic from PandaBuddy (moved to main chat)
 
     # Pull personalization data
     stress_ctx = ""
@@ -493,11 +499,11 @@ async def panda_chat(
         if total > 0:
             avg = quiz_stats.get("average_percentage", 0)
             if avg < 50:
-                quiz_ctx = f"Student's quiz average is {avg:.0f}% — needs more practice."
+                quiz_ctx = f"Only if the student explicitly asks about performance: their quiz average is {avg:.0f}% (needs more practice)."
             elif avg >= 80:
-                quiz_ctx = f"Student is excelling with a {avg:.0f}% quiz average!"
+                quiz_ctx = f"Only if the student explicitly asks about performance: their quiz average is {avg:.0f}% (excelling)."
             else:
-                quiz_ctx = f"Student has a steady {avg:.0f}% quiz average."
+                quiz_ctx = f"Only if the student explicitly asks about performance: their quiz average is {avg:.0f}% (steady)."
     except Exception:
         pass
 
@@ -518,15 +524,9 @@ async def panda_chat(
 
     if llm is not None:
         try:
-            # Inject confusion instructions if needed
-            confusion_instructions = ""
-            if is_confused:
-                confusion_instructions = "\n[SYSTEM INSTRUCTION: THE STUDENT IS CONFUSED. Provide a simpler, step-by-step explanation. Be highly supportive and reassuring. Suggest they can generate notes or take a quiz for better understanding.]\n"
-
             panda_prompt = (
                 f"{PANDA_SYSTEM_PROMPT}\n\n"
                 f"Student data:\n{stress_ctx}\n{quiz_ctx}\n{topic_ctx}\n"
-                f"{confusion_instructions}\n"
                 "IMPORTANT: This is the PandaBuddy widget — keep your response SHORT "
                 "(2-4 sentences). Be warm, direct, and end with ONE specific suggestion."
             )
@@ -570,15 +570,23 @@ async def panda_chat(
         }
         response = fallbacks.get(mood, fallbacks["neutral"])
 
-    # Removed save_chat to prevent widget chats from showing up in recent topics
+    # Save chat to update user stats, but flag as widget so it doesn't clutter recent topics
+    try:
+        save_chat(
+            user_id=current_user.user_id,
+            message=user_message,
+            response=response,
+            category=predicted_category,
+            is_widget=True
+        )
+    except Exception as e:
+        print(f"Failed to save widget chat: {e}")
 
     return PandaChatResponse(
         response=response,
         mood=mood,
         suggested_action=suggested_action,
-        timestamp=datetime.utcnow().isoformat(),
-        is_confused=is_confused,
-        confusion_confidence=confusion_conf
+        timestamp=datetime.utcnow().isoformat()
     )
 
 
@@ -916,11 +924,8 @@ async def get_dashboard_stats(current_user: TokenData = Depends(get_current_user
         # Get recent chat history for analysis
         history = get_chat_history(current_user.user_id, limit=100)
         
-        # Calculate category distribution
-        category_counts = {}
-        for msg in history:
-            cat = msg.get('category', 'general')
-            category_counts[cat] = category_counts.get(cat, 0) + 1
+        # Use category distribution from stats (which includes widget chats)
+        category_counts = stats.get('categories', {})
         
         # Extract top topics (simplified - from message content)
         topics = []

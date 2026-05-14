@@ -41,7 +41,7 @@ function getGreeting() {
   return "Studying late? I\u2019ve got you. \u2b50";
 }
 
-export default function ChatContainer({ messages = [], isTyping, onSuggest }) {
+export default function ChatContainer({ messages = [], isTyping, onSuggest, isConfused }) {
   const bottomRef = useRef(null);
   const SUGGESTED = useMemo(() => pickSuggestions(), []);
   const greeting = useMemo(() => getGreeting(), []);
@@ -113,6 +113,17 @@ export default function ChatContainer({ messages = [], isTyping, onSuggest }) {
               <Message key={msg.id} message={msg} />
             ))}
           </AnimatePresence>
+          {isConfused && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="bg-orange-500/10 border border-orange-500/20 px-4 py-2 mt-2 rounded-xl flex items-center gap-2 max-w-fit mx-auto"
+            >
+              <span className="text-orange-400 text-xs font-bold px-1.5 py-0.5 rounded bg-orange-500/20">!</span>
+              <span className="text-orange-300 text-xs font-medium">Confusion Detected — Adjusting explanation...</span>
+            </motion.div>
+          )}
           {isTyping && <TypingIndicator />}
           <div ref={bottomRef} className="h-8" />
         </div>

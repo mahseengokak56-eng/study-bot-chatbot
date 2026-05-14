@@ -65,7 +65,7 @@ def get_user_by_id(user_id: str) -> Optional[Dict[str, Any]]:
 
 
 # ── Chat Operations ──────────────────────────────────────────────────────────
-def save_chat(user_id: str, message: str, response: str, category: str) -> str:
+def save_chat(user_id: str, message: str, response: str, category: str, is_widget: bool = False) -> str:
     """Save a chat message to database."""
     _, chats_collection = get_collections()
 
@@ -74,6 +74,7 @@ def save_chat(user_id: str, message: str, response: str, category: str) -> str:
         "message": message,
         "response": response,
         "category": category,
+        "is_widget": is_widget,
         "timestamp": datetime.now(timezone.utc)
     }
 
@@ -87,7 +88,7 @@ def get_chat_history(user_id: str, limit: int = 50) -> List[Dict[str, Any]]:
 
     chats = list(
         chats_collection
-        .find({"user_id": user_id}, {"_id": 0})
+        .find({"user_id": user_id, "is_widget": {"$ne": True}}, {"_id": 0})
         .sort("timestamp", -1)
         .limit(limit)
     )

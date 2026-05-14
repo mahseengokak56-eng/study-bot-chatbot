@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send, Mic, Image as ImageIcon, Paperclip, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function InputArea({ onSend, disabled }) {
+export default function InputArea({ onSend, disabled, isConfused }) {
   const [content, setContent] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
@@ -177,6 +177,32 @@ export default function InputArea({ onSend, disabled }) {
           </motion.button>
         </div>
       </div>
+
+      {/* Confusion Action Chips */}
+      <AnimatePresence>
+        {isConfused && (
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }} 
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mt-3 flex gap-2 flex-wrap justify-center"
+          >
+            {['Explain step-by-step', 'Generate notes', 'Practice Quiz', 'Simplify further'].map((suggestion) => (
+              <button
+                key={suggestion}
+                onClick={() => {
+                  setContent(suggestion);
+                  textareaRef.current?.focus();
+                }}
+                disabled={disabled}
+                className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors border disabled:opacity-50 bg-orange-500/10 hover:bg-orange-500/20 text-orange-300 border-orange-500/20 shadow-sm"
+              >
+                {suggestion}
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {isRecording && (
         <motion.div 

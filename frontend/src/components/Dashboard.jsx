@@ -1862,6 +1862,7 @@ function Dashboard() {
     removeSession,
     sendMessage,
     isTyping,
+    isConfused,
   } = useChat();
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -2068,6 +2069,7 @@ function Dashboard() {
                     messages={activeSession?.messages || []}
                     isTyping={isTyping}
                     onSuggest={sendMessage}
+                    isConfused={isConfused}
                   />
                 </div>
 
@@ -2075,6 +2077,7 @@ function Dashboard() {
                   <InputArea
                     onSend={sendMessage}
                     disabled={isTyping}
+                    isConfused={isConfused}
                   />
                   <p className="text-center text-xs text-gemini-muted mt-2 mx-auto max-w-lg mb-2 opacity-60">
                     Current Session: {activeSession?.title || 'Unknown'} - EduNova AI can make mistakes.

@@ -25,6 +25,7 @@ export function useChat() {
     () => sessions[0]?.id || generateId()
   );
   const [isTyping, setIsTyping] = useState(false);
+  const [isConfused, setIsConfused] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -94,12 +95,17 @@ export function useChat() {
     });
 
     setIsTyping(true);
+    setIsConfused(false);
 
     try {
       // Pass history for conversational memory
       const response = await sendChatMessage(text, { image, file }, historySnapshot);
       const fullText = response.response || "Sorry, I couldn't process that.";
       const category = response.predicted_category || "general";
+      
+      if (response.is_confused) {
+        setIsConfused(true);
+      }
 
       const botMsgId = Date.now() + 1;
       const botPlaceholder = {
@@ -158,5 +164,6 @@ export function useChat() {
     removeSession,
     sendMessage,
     isTyping,
+    isConfused,
   };
 }

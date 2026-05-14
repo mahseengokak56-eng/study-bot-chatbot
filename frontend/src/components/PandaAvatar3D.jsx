@@ -18,7 +18,6 @@ const PandaAvatar3D = ({
   const [pandaMood, setPandaMood] = useState('happy'); // happy, curious, sleepy, excited
   const [isListening, setIsListening] = useState(false);
   const [conversationStage, setConversationStage] = useState('greeting');
-  const [isConfused, setIsConfused] = useState(false);
   const currentUser = getCurrentUser();
   const messageRef = useRef(0);
   const inputRef = useRef(null);
@@ -127,7 +126,6 @@ const PandaAvatar3D = ({
     setIsTyping(true);
     setPandaMood('curious');
     setCurrentMessage('');
-    setIsConfused(false);
 
     try {
       const token = localStorage.getItem('token');
@@ -149,10 +147,6 @@ const PandaAvatar3D = ({
       }, { timeout: 8000 });
 
       const reply = result.data?.response || "I'm here to help! What would you like to know? \uD83D\uDC3C";
-      
-      if (result.data?.is_confused) {
-        setIsConfused(true);
-      }
 
       setIsTyping(false);
       typeMessage(reply, 'happy');
@@ -748,21 +742,6 @@ const PandaAvatar3D = ({
               </div>
             </div>
 
-            {/* Confusion Indicator */}
-            <AnimatePresence>
-              {isConfused && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="bg-orange-500/10 border-b border-orange-500/20 px-4 py-2 flex items-center gap-2 overflow-hidden"
-                >
-                  <span className="text-orange-400 text-xs font-bold px-1.5 py-0.5 rounded bg-orange-500/20">!</span>
-                  <span className="text-orange-300 text-xs font-medium">Confusion Detected — Adjusting explanation...</span>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
             {/* Chat Area */}
             <div className="h-72 overflow-y-auto p-4 space-y-3 bg-gemini-bg">
               {messages.map((msg, idx) => (
@@ -854,19 +833,12 @@ const PandaAvatar3D = ({
               
               {/* Quick suggestions */}
               <div className="flex gap-2 mt-2 flex-wrap">
-                {(isConfused 
-                  ? ['Explain step-by-step', 'Generate notes', 'Practice Quiz', 'Simplify further']
-                  : ['Going good!', 'Need help', 'Feeling tired', 'Quiz me!', 'Generate notes']
-                ).map((suggestion) => (
+                {['Going good!', 'Need help', 'Feeling tired', 'Quiz me!', 'Generate notes'].map((suggestion) => (
                   <button
                     key={suggestion}
                     onClick={() => handleUserSend(suggestion)}
                     disabled={isListening || isTyping}
-                    className={`px-3 py-1 rounded-full text-xs transition-colors border disabled:opacity-50 ${
-                      isConfused 
-                        ? 'bg-orange-500/10 hover:bg-orange-500/20 text-orange-300 border-orange-500/20' 
-                        : 'bg-white/5 hover:bg-white/10 text-gemini-muted border-white/5'
-                    }`}
+                    className="px-3 py-1 bg-white/5 hover:bg-white/10 rounded-full text-xs text-gemini-muted transition-colors border border-white/5 disabled:opacity-50"
                   >
                     {suggestion}
                   </button>
