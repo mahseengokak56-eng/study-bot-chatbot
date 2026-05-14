@@ -27,6 +27,7 @@ load_dotenv()
 from backend.ml.predict import predict_category, get_predictor
 from backend.ml.stress_predictor import predict_stress, train_stress_model
 from backend.ml.performance_predictor import predict_performance, train_performance_model
+from backend.ml.confusion_model import confusion_engine
 from backend.auth.auth import (
     UserRegister, UserLogin, Token,
     hash_password, verify_password, create_access_token,
@@ -35,7 +36,7 @@ from backend.auth.auth import (
 from backend.db.db import (
     create_user, get_user_by_email, get_user_by_id,
     save_chat, get_chat_history, get_user_stats,
-    save_stress_prediction, save_performance_prediction,
+    save_stress_prediction, save_performance_prediction, save_confusion_prediction,
     get_stress_prediction_count, get_performance_prediction_count,
     save_quiz_result, get_quiz_results, get_quiz_stats,
     save_notes_history, get_notes_history,
@@ -445,6 +446,8 @@ class PandaChatResponse(BaseModel):
     mood: str
     suggested_action: Optional[str] = None
     timestamp: str
+    is_confused: bool = False
+    confusion_confidence: float = 0.0
 
 
 @app.post("/api/panda-chat", response_model=PandaChatResponse)
@@ -462,6 +465,22 @@ async def panda_chat(
     except Exception:
         predicted_category = "general"
     mood = detect_mood(user_message, predicted_category)
+
+    # Confusion Detection
+    confusion_pred = confusion_engine.predict(user_message)
+    is_confused = confusion_pred["is_confused"]
+    confusion_conf = confusion_pred["confidence"]
+    
+    # Save confusion prediction
+    try:
+        save_confusion_prediction(
+            user_id=current_user.user_id, 
+            message=user_message, 
+            is_confused=is_confused, 
+            confidence=confusion_conf
+        )
+    except Exception as e:
+        print(f"Failed to save confusion prediction: {e}")
 
     # Pull personalization data
     stress_ctx = ""
@@ -499,9 +518,15 @@ async def panda_chat(
 
     if llm is not None:
         try:
+            # Inject confusion instructions if needed
+            confusion_instructions = ""
+            if is_confused:
+                confusion_instructions = "\n[SYSTEM INSTRUCTION: THE STUDENT IS CONFUSED. Provide a simpler, step-by-step explanation. Be highly supportive and reassuring. Suggest they can generate notes or take a quiz for better understanding.]\n"
+
             panda_prompt = (
                 f"{PANDA_SYSTEM_PROMPT}\n\n"
-                f"Student data:\n{stress_ctx}\n{quiz_ctx}\n{topic_ctx}\n\n"
+                f"Student data:\n{stress_ctx}\n{quiz_ctx}\n{topic_ctx}\n"
+                f"{confusion_instructions}\n"
                 "IMPORTANT: This is the PandaBuddy widget — keep your response SHORT "
                 "(2-4 sentences). Be warm, direct, and end with ONE specific suggestion."
             )
@@ -551,7 +576,9 @@ async def panda_chat(
         response=response,
         mood=mood,
         suggested_action=suggested_action,
-        timestamp=datetime.utcnow().isoformat()
+        timestamp=datetime.utcnow().isoformat(),
+        is_confused=is_confused,
+        confusion_confidence=confusion_conf
     )
 
 

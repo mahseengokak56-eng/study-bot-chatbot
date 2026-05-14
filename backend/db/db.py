@@ -125,11 +125,12 @@ def get_user_stats(user_id: str) -> Dict[str, Any]:
 def get_collections_extended():
     """Get all collections including predictions."""
     db = get_db()
-    return db["users"], db["chats"], db["stress_predictions"], db["performance_predictions"]
+    return db["users"], db["chats"], db["stress_predictions"], db["performance_predictions"], db["confusion_predictions"]
 
 def save_stress_prediction(user_id: str, inputs: dict, result: dict) -> str:
     """Save a stress prediction to database."""
-    _, _, stress_collection, _ = get_collections_extended()
+    collections = get_collections_extended()
+    stress_collection = collections[2]
     
     prediction_doc = {
         "user_id": user_id,
@@ -141,9 +142,26 @@ def save_stress_prediction(user_id: str, inputs: dict, result: dict) -> str:
     result_obj = stress_collection.insert_one(prediction_doc)
     return str(result_obj.inserted_id)
 
+def save_confusion_prediction(user_id: str, message: str, is_confused: bool, confidence: float) -> str:
+    """Save a confusion prediction to database."""
+    collections = get_collections_extended()
+    confusion_collection = collections[4]
+    
+    prediction_doc = {
+        "user_id": user_id,
+        "message": message,
+        "is_confused": is_confused,
+        "confidence": confidence,
+        "timestamp": datetime.now(timezone.utc)
+    }
+    
+    result_obj = confusion_collection.insert_one(prediction_doc)
+    return str(result_obj.inserted_id)
+
 def save_performance_prediction(user_id: str, inputs: dict, result: dict) -> str:
     """Save a performance prediction to database."""
-    _, _, _, perf_collection = get_collections_extended()
+    collections = get_collections_extended()
+    perf_collection = collections[3]
     
     prediction_doc = {
         "user_id": user_id,
@@ -157,12 +175,14 @@ def save_performance_prediction(user_id: str, inputs: dict, result: dict) -> str
 
 def get_stress_prediction_count(user_id: str) -> int:
     """Get count of stress predictions for a user."""
-    _, _, stress_collection, _ = get_collections_extended()
+    collections = get_collections_extended()
+    stress_collection = collections[2]
     return stress_collection.count_documents({"user_id": user_id})
 
 def get_performance_prediction_count(user_id: str) -> int:
     """Get count of performance predictions for a user."""
-    _, _, _, perf_collection = get_collections_extended()
+    collections = get_collections_extended()
+    perf_collection = collections[3]
     return perf_collection.count_documents({"user_id": user_id})
 
 
