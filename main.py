@@ -545,15 +545,7 @@ async def panda_chat(
         }
         response = fallbacks.get(mood, fallbacks["neutral"])
 
-    try:
-        save_chat(
-            user_id=current_user.user_id,
-            message=f"[Widget] {user_message}",
-            response=response,
-            category=predicted_category
-        )
-    except Exception:
-        pass
+    # Removed save_chat to prevent widget chats from showing up in recent topics
 
     return PandaChatResponse(
         response=response,
